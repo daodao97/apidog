@@ -1,6 +1,7 @@
-## hyperf apidog
+# hyperf apidog 
 
-一个 []hyperf][https://github.com/hyperf-cloud/hyperf] 框架的 Api 参数校验及 swagger 文档生成扩展
+## Api Watch Dog
+一个 [Hyperf](https://github.com/hyperf-cloud/hyperf) 框架的 Api 参数校验及 swagger 文档生成扩展
 
 1.  根据注解自动进行Api参数的校验, 业务代码更纯粹.
 2.  根据注解自动生成Swagger文档, 让接口文档维护更省心.
@@ -8,7 +9,7 @@
 ## 安装
 
 ```
-composer install hyperf/apidog
+composer install daodao97/apidog dev-master
 ```
 
 ## 配置
@@ -126,5 +127,8 @@ class UserController extends Controller
 ```
 
 ## Swagger展示
+![swagger](http://tva1.sinaimg.cn/large/007X8olVly1g6j91o6xroj31k10u079l.jpg)
 
-![apidog swaggger][https://imgchr.com/i/mzfXQ0]
+## TODO
+- 多层级参数的校验
+- swagger更多属性的支持
