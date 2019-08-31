@@ -9,7 +9,7 @@
 ## 安装
 
 ```
-composer install hyperf/apidog
+composer install daodao97/apidog dev-master
 ```
 
 ## 配置
@@ -128,3 +128,7 @@ class UserController extends Controller
 
 ## Swagger展示
 ![swagger](http://tva1.sinaimg.cn/large/007X8olVly1g6j91o6xroj31k10u079l.jpg)
+
+## TODO
+- 多层级参数的校验
+- swagger更多属性的支持
