@@ -9,7 +9,7 @@
 ## 安装
 
 ```
-composer install daodao97/apidog dev-master
+composer require daodao97/apidog dev-master
 ```
 
 ## 配置
