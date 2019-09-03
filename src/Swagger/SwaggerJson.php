@@ -118,7 +118,7 @@ class SwaggerJson
 
     public function save()
     {
-        $this->swagger['tags'] = array_values($this->swagger['tags']);
+        $this->swagger['tags'] = array_values($this->swagger['tags'] ?? []);
         $output_file = $this->swagger['output_file'] ?? '';
         if (!$output_file) {
             return;
