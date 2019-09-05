@@ -8,6 +8,7 @@ use Hyperf\Apidog\Annotation\Header;
 use Hyperf\Apidog\Annotation\Query;
 use Hyperf\Apidog\ApiAnnotation;
 use Hyperf\Di\Annotation\AnnotationCollector;
+use Hyperf\Di\Annotation\Inject;
 use Hyperf\HttpMessage\Stream\SwooleStream;
 use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\HttpServer\Contract\ResponseInterface as HttpResponse;
@@ -38,6 +39,11 @@ class ValidationMiddleware extends CoreMiddleware
      * @var LoggerFactory
      */
     protected $log;
+    /**
+     * @Inject()
+     * @var \Hyperf\Apidog\Validation\ValidationInterface
+     */
+    protected $validation;
 
     public function __construct(ContainerInterface $container, HttpResponse $response, RequestInterface $request, LoggerFactory $logger)
     {
@@ -130,9 +136,8 @@ class ValidationMiddleware extends CoreMiddleware
 
     public function check($rules, $data, $controllerInstance)
     {
-        $validation = new Validation();
-        $validated_data = $validation->check($rules, $data, $controllerInstance);
+        $validated_data = $this->validation->check($rules, $data, $controllerInstance);
 
-        return [$validated_data, $validation->getError()];
+        return [$validated_data, $this->validation->getError()];
     }
 }

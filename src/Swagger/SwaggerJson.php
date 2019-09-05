@@ -6,10 +6,8 @@ use Hyperf\Apidog\Annotation\Body;
 use Hyperf\Apidog\Annotation\Param;
 use Hyperf\Apidog\ApiAnnotation;
 use Hyperf\Contract\ConfigInterface;
-use Hyperf\Di\Annotation\AnnotationCollector;
 use Hyperf\HttpServer\Annotation\Mapping;
 use Hyperf\Utils\ApplicationContext;
-use Hyperf\Apidog\Annotation\ApiController;
 
 class SwaggerJson
 {

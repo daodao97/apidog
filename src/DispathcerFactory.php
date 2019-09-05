@@ -2,11 +2,6 @@
 declare(strict_types = 1);
 namespace Hyperf\Apidog;
 
-use Doctrine\Common\Annotations\AnnotationReader;
-use Hyperf\Apidog\Annotation\ApiResponse;
-use Hyperf\Apidog\Annotation\Param;
-use Hyperf\Di\Annotation\AnnotationCollector;
-use Hyperf\Di\ReflectionManager;
 use Hyperf\HttpServer\Annotation\Mapping;
 use Hyperf\HttpServer\MiddlewareManager;
 use Hyperf\HttpServer\Router\DispatcherFactory;

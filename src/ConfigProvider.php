@@ -2,6 +2,8 @@
 declare(strict_types = 1);
 namespace Hyperf\Apidog;
 
+use Hyperf\Apidog\Validation\ValidationInterface;
+
 class ConfigProvider
 {
 
@@ -9,6 +11,7 @@ class ConfigProvider
     {
         return [
             'dependencies' => [
+                ValidationInterface::class => \Hyperf\Apidog\Validation\Validation::class
             ],
             'commands' => [],
             'scan' => [
