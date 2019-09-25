@@ -142,7 +142,9 @@ class SwaggerJson
                     $ret = $this->responseSchemaTodefinition($val, $modelName . ucfirst($key), 1);
                     $property['$ref'] = '#/definitions/' . $modelName . ucfirst($key);
                 }
-                $this->swagger['definitions'][$modelName . ucfirst($key)] = $ret;
+                if ($ret) {
+                    $this->swagger['definitions'][$modelName . ucfirst($key)] = $ret;
+                }
             } else {
                 $property['default'] = $val;
             }
