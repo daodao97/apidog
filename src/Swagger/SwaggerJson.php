@@ -119,6 +119,9 @@ class SwaggerJson
 
     public function responseSchemaTodefinition($schema, $modelName, $level = 0)
     {
+        if (!$schema) {
+            return;
+        }
         $definition = [];
         foreach ($schema as $key => $val) {
             $property = [];
