@@ -13,11 +13,13 @@ class SwaggerJson
 {
 
     public $config;
+
     public $swagger;
 
     public function __construct()
     {
-        $this->config = ApplicationContext::getContainer()->get(ConfigInterface::class);
+        $this->config = ApplicationContext::getContainer()
+                                          ->get(ConfigInterface::class);
         $this->swagger = $this->config->get('swagger');
     }
 
@@ -98,6 +100,7 @@ class SwaggerJson
 
     public function makeResponses($responses, $path)
     {
+        $path = str_replace(['{', '}'], '', $path);
         $resp = [];
         /** @var ApiResponse $item */
         foreach ($responses as $item) {
@@ -105,13 +108,42 @@ class SwaggerJson
                 'description' => $item->description,
             ];
             if ($item->schema) {
-                $modelName = implode('', array_map('ucfirst', explode('/', $path))) . $item->code . 'Response';
-                $this->swagger['definitions'][$modelName] = $item->schema;
+                $modelName = implode('', array_map('ucfirst', explode('/', $path))) . 'Response' . $item->code;
+                $this->responseSchemaTodefinition($item->schema, $modelName);
                 $resp[$item->code]['schema']['$ref'] = '#/definitions/' . $modelName;
             }
         }
 
         return $resp;
+    }
+
+    public function responseSchemaTodefinition($schema, $modelName, $level = 0)
+    {
+        $definition = [];
+        foreach ($schema as $key => $val) {
+            $property = [];
+            $property['type'] = gettype($val);
+            if (is_array($val)) {
+                if ($property['type'] == 'array' && isset($val[0])) {
+                    $property['type'] = 'array';
+                    $ret = $this->responseSchemaTodefinition($val[0], $modelName . ucfirst($key), 1);
+                    $property['items']['$ref'] = '#/definitions/' . $modelName . ucfirst($key);
+                } else {
+                    $property['type'] = 'object';
+                    $ret = $this->responseSchemaTodefinition($val, $modelName . ucfirst($key), 1);
+                    $property['$ref'] = '#/definitions/' . $modelName . ucfirst($key);
+                }
+                $this->swagger['definitions'][$modelName . ucfirst($key)] = $ret;
+            } else {
+                $property['default'] = $val;
+            }
+            $definition['properties'][$key] = $property;
+        }
+        if ($level === 0) {
+            $this->swagger['definitions'][$modelName] = $definition;
+        }
+
+        return $definition;
     }
 
     public function save()

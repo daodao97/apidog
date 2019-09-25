@@ -26,23 +26,5 @@ class ApiResponse extends AbstractAnnotation
 
     public function makeSchema()
     {
-        if (!$this->schema) {
-            return $this;
-        }
-        $schema = [
-            'type' => 'object',
-            'properties' => [],
-        ];
-
-        foreach ($this->schema as $key => $val) {
-            $property = [];
-            $property['type'] = gettype($val);
-            $property['default'] = $val;
-            $schema['properties'][$key] = $property;
-        }
-
-        $this->schema = $schema;
-
-        return $this;
     }
 }
