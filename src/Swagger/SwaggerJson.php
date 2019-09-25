@@ -129,9 +129,14 @@ class SwaggerJson
             $property['type'] = gettype($val);
             if (is_array($val)) {
                 if ($property['type'] == 'array' && isset($val[0])) {
-                    $property['type'] = 'array';
-                    $ret = $this->responseSchemaTodefinition($val[0], $modelName . ucfirst($key), 1);
-                    $property['items']['$ref'] = '#/definitions/' . $modelName . ucfirst($key);
+                    if (is_array($val[0])) {
+                        $property['type'] = 'array';
+                        $ret = $this->responseSchemaTodefinition($val[0], $modelName . ucfirst($key), 1);
+                        $property['items']['$ref'] = '#/definitions/' . $modelName . ucfirst($key);
+                    } else {
+                        $property['type'] = 'array';
+                        $property['items']['type'] = gettype($val[0]);
+                    }
                 } else {
                     $property['type'] = 'object';
                     $ret = $this->responseSchemaTodefinition($val, $modelName . ucfirst($key), 1);

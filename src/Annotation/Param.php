@@ -10,6 +10,7 @@ abstract class Param extends AbstractAnnotation
     public $key;
     public $rule;
     public $default;
+    public $description;
 
     public function __construct($value = null)
     {
@@ -26,7 +27,7 @@ abstract class Param extends AbstractAnnotation
 
     public function setDescription()
     {
-        $this->description = explode('|', $this->key)[1] ?? '';
+        $this->description = $this->description ?: explode('|', $this->key)[1] ?? '';
 
         return $this;
     }
