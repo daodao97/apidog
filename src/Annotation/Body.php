@@ -25,7 +25,7 @@ class Body extends Param
                 }
             }
         }
-        $this->setRquire()->setType()->rules2schema();
+        $this->setRquire()->setType();
     }
 
     public function setRquire()
@@ -40,44 +40,5 @@ class Body extends Param
         $this->type = '';
 
         return $this;
-    }
-
-    public function rules2schema()
-    {
-        $schema = [
-            'type' => 'object',
-            'required' => [],
-            'properties' => [],
-        ];
-        foreach ($this->rules as $field => $rule) {
-            $property = [];
-            $field_name_label = explode('|', $field);
-            $field_name = $field_name_label[0];
-            if (!is_array($rule)) {
-                $type = $this->getTypeByRule($rule);
-            } else {
-                //TODO 结构体多层
-                $type = 'string';
-            }
-            $property['type'] = $type;
-            $property['description'] = $field_name_label[1] ?? '';
-            $schema['properties'][$field_name] = $property;
-        }
-
-        $this->schema = $schema;
-
-        return $this;
-    }
-
-    public function getTypeByRule($rule)
-    {
-        $default = explode('|', preg_replace('/\[.*\]/', '', $rule));
-        if (array_intersect($default, ['int', 'lt', 'gt', 'ge'])) {
-            return 'integer';
-        }
-        if (array_intersect($default, ['array'])) {
-            return 'array';
-        }
-        return 'string';
     }
 }

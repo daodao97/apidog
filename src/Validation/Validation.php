@@ -315,7 +315,7 @@ class Validation implements ValidationInterface
 
             return true;
         }
-        if (!filter_var($val, FILTER_VALIDATE_INT)) {
+        if (filter_var($val, FILTER_VALIDATE_INT) === false) {
             $this->errors[] = '%s不是合法的整数';
 
             return false;

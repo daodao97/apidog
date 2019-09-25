@@ -76,8 +76,77 @@ class SwaggerJson
         return controllerNameToPath($className);
     }
 
+    public function initModel()
+    {
+        $array_schema = [
+            'type' => 'array',
+            'required' => [],
+            'items' => [
+                'type' => 'string'
+            ],
+        ];
+        $object_schema = [
+            'type' => 'object',
+            'required' => [],
+            'items' => [
+                'type' => 'string'
+            ],
+        ];
+
+        $this->swagger['definitions']['ModelArray'] = $array_schema;
+        $this->swagger['definitions']['ModelObject'] = $object_schema;
+    }
+
+    public function rules2schema($rules)
+    {
+        $schema = [
+            'type' => 'object',
+            'required' => [],
+            'properties' => [],
+        ];
+        foreach ($rules as $field => $rule) {
+            $property = [];
+            $field_name_label = explode('|', $field);
+            $field_name = $field_name_label[0];
+            if (!is_array($rule)) {
+                $type = $this->getTypeByRule($rule);
+            } else {
+                //TODO 结构体多层
+                $type = 'string';
+            }
+            if ($type == 'array') {
+                $property['$ref'] = '#/definitions/ModelArray';;
+            }
+            if ($type == 'object') {
+                $property['$ref'] = '#/definitions/ModelObject';;
+            }
+            $property['type'] = $type;
+            $property['description'] = $field_name_label[1] ?? '';
+            $schema['properties'][$field_name] = $property;
+        }
+
+        return $schema;
+    }
+
+    public function getTypeByRule($rule)
+    {
+        $default = explode('|', preg_replace('/\[.*\]/', '', $rule));
+        if (array_intersect($default, ['int', 'lt', 'gt', 'ge'])) {
+            return 'integer';
+        }
+        if (array_intersect($default, ['array'])) {
+            return 'array';
+        }
+        if (array_intersect($default, ['object'])) {
+            return 'object';
+        }
+        return 'string';
+    }
+
     public function makeParameters($params, $path)
     {
+        $this->initModel();
+        $path = str_replace(['{', '}'], '', $path);
         $parameters = [];
         /** @var \Hyperf\Apidog\Annotation\Query $item */
         foreach ($params as $item) {
@@ -90,7 +159,8 @@ class SwaggerJson
             ];
             if ($item instanceof Body) {
                 $modelName = implode('', array_map('ucfirst', explode('/', $path)));
-                $this->swagger['definitions'][$modelName] = $item->schema;
+                $schema = $this->rules2schema($item->rules);
+                $this->swagger['definitions'][$modelName] = $schema;
                 $parameters[$item->name]['schema']['$ref'] = '#/definitions/' . $modelName;
             }
         }
@@ -109,8 +179,10 @@ class SwaggerJson
             ];
             if ($item->schema) {
                 $modelName = implode('', array_map('ucfirst', explode('/', $path))) . 'Response' . $item->code;
-                $this->responseSchemaTodefinition($item->schema, $modelName);
-                $resp[$item->code]['schema']['$ref'] = '#/definitions/' . $modelName;
+                $ret = $this->responseSchemaTodefinition($item->schema, $modelName);
+                if ($ret) {
+                    $resp[$item->code]['schema']['$ref'] = '#/definitions/' . $modelName;
+                }
             }
         }
 
@@ -120,7 +192,7 @@ class SwaggerJson
     public function responseSchemaTodefinition($schema, $modelName, $level = 0)
     {
         if (!$schema) {
-            return;
+            return false;
         }
         $definition = [];
         foreach ($schema as $key => $val) {
