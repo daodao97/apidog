@@ -124,6 +124,7 @@ class SwaggerJson
         }
         $definition = [];
         foreach ($schema as $key => $val) {
+            $key = str_replace('_', '', $key);
             $property = [];
             $property['type'] = gettype($val);
             if (is_array($val)) {
