@@ -65,7 +65,7 @@ class SwaggerJson
             'produces' => [
                 "application/json",
             ],
-            'responses' => $this->makeResponses($responses, $path),
+            'responses' => $this->makeResponses($responses, $path, $method),
             'description' => $mapping->description,
         ];
 
@@ -168,7 +168,7 @@ class SwaggerJson
         return array_values($parameters);
     }
 
-    public function makeResponses($responses, $path)
+    public function makeResponses($responses, $path, $method)
     {
         $path = str_replace(['{', '}'], '', $path);
         $resp = [];
@@ -178,7 +178,7 @@ class SwaggerJson
                 'description' => $item->description,
             ];
             if ($item->schema) {
-                $modelName = implode('', array_map('ucfirst', explode('/', $path))) . 'Response' . $item->code;
+                $modelName = implode('', array_map('ucfirst', explode('/', $path))) . ucfirst($method) .'Response' . $item->code;
                 $ret = $this->responseSchemaTodefinition($item->schema, $modelName);
                 if ($ret) {
                     $resp[$item->code]['schema']['$ref'] = '#/definitions/' . $modelName;
@@ -196,26 +196,27 @@ class SwaggerJson
         }
         $definition = [];
         foreach ($schema as $key => $val) {
-            $key = str_replace('_', '', $key);
+            $_key = str_replace('_', '', $key);
             $property = [];
             $property['type'] = gettype($val);
             if (is_array($val)) {
+                $definition_name = $modelName . ucfirst($_key);
                 if ($property['type'] == 'array' && isset($val[0])) {
                     if (is_array($val[0])) {
                         $property['type'] = 'array';
-                        $ret = $this->responseSchemaTodefinition($val[0], $modelName . ucfirst($key), 1);
-                        $property['items']['$ref'] = '#/definitions/' . $modelName . ucfirst($key);
+                        $ret = $this->responseSchemaTodefinition($val[0], $definition_name, 1);
+                        $property['items']['$ref'] = '#/definitions/' . $definition_name;
                     } else {
                         $property['type'] = 'array';
                         $property['items']['type'] = gettype($val[0]);
                     }
                 } else {
                     $property['type'] = 'object';
-                    $ret = $this->responseSchemaTodefinition($val, $modelName . ucfirst($key), 1);
-                    $property['$ref'] = '#/definitions/' . $modelName . ucfirst($key);
+                    $ret = $this->responseSchemaTodefinition($val, $definition_name, 1);
+                    $property['$ref'] = '#/definitions/' . $definition_name;
                 }
                 if (isset($ret)) {
-                    $this->swagger['definitions'][$modelName . ucfirst($key)] = $ret;
+                    $this->swagger['definitions'][$definition_name] = $ret;
                 }
             } else {
                 $property['default'] = $val;
