@@ -1,6 +1,8 @@
 <?php
 declare(strict_types = 1);
 
+use Seld\JsonLint\JsonParser;
+
 function array_get_node($key, $arr = [], $default = null)
 {
     $path = explode('.', $key);
