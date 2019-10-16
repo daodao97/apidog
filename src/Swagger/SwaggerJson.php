@@ -18,8 +18,7 @@ class SwaggerJson
 
     public function __construct()
     {
-        $this->config = ApplicationContext::getContainer()
-                                          ->get(ConfigInterface::class);
+        $this->config = ApplicationContext::getContainer()->get(ConfigInterface::class);
         $this->swagger = $this->config->get('swagger');
     }
 
@@ -73,19 +72,23 @@ class SwaggerJson
 
     public function basePath($className)
     {
-        return controllerNameToPath($className);
+        $path = strtolower($className);
+        $path = str_replace('\\', '/', $path);
+        $path = str_replace('app/controller', '', $path);
+        $path = str_replace('controller', '', $path);
+        return $path;
     }
 
     public function initModel()
     {
-        $array_schema = [
+        $arraySchema = [
             'type' => 'array',
             'required' => [],
             'items' => [
                 'type' => 'string'
             ],
         ];
-        $object_schema = [
+        $objectSchema = [
             'type' => 'object',
             'required' => [],
             'items' => [
@@ -93,8 +96,8 @@ class SwaggerJson
             ],
         ];
 
-        $this->swagger['definitions']['ModelArray'] = $array_schema;
-        $this->swagger['definitions']['ModelObject'] = $object_schema;
+        $this->swagger['definitions']['ModelArray'] = $arraySchema;
+        $this->swagger['definitions']['ModelObject'] = $objectSchema;
     }
 
     public function rules2schema($rules)
@@ -106,8 +109,8 @@ class SwaggerJson
         ];
         foreach ($rules as $field => $rule) {
             $property = [];
-            $field_name_label = explode('|', $field);
-            $field_name = $field_name_label[0];
+            $fieldNameLabel = explode('|', $field);
+            $fieldName = $fieldNameLabel[0];
             if (!is_array($rule)) {
                 $type = $this->getTypeByRule($rule);
             } else {
@@ -121,8 +124,8 @@ class SwaggerJson
                 $property['$ref'] = '#/definitions/ModelObject';;
             }
             $property['type'] = $type;
-            $property['description'] = $field_name_label[1] ?? '';
-            $schema['properties'][$field_name] = $property;
+            $property['description'] = $fieldNameLabel[1] ?? '';
+            $schema['properties'][$fieldName] = $property;
         }
 
         return $schema;
@@ -200,23 +203,23 @@ class SwaggerJson
             $property = [];
             $property['type'] = gettype($val);
             if (is_array($val)) {
-                $definition_name = $modelName . ucfirst($_key);
+                $definitionName = $modelName . ucfirst($_key);
                 if ($property['type'] == 'array' && isset($val[0])) {
                     if (is_array($val[0])) {
                         $property['type'] = 'array';
-                        $ret = $this->responseSchemaTodefinition($val[0], $definition_name, 1);
-                        $property['items']['$ref'] = '#/definitions/' . $definition_name;
+                        $ret = $this->responseSchemaTodefinition($val[0], $definitionName, 1);
+                        $property['items']['$ref'] = '#/definitions/' . $definitionName;
                     } else {
                         $property['type'] = 'array';
                         $property['items']['type'] = gettype($val[0]);
                     }
                 } else {
                     $property['type'] = 'object';
-                    $ret = $this->responseSchemaTodefinition($val, $definition_name, 1);
-                    $property['$ref'] = '#/definitions/' . $definition_name;
+                    $ret = $this->responseSchemaTodefinition($val, $definitionName, 1);
+                    $property['$ref'] = '#/definitions/' . $definitionName;
                 }
                 if (isset($ret)) {
-                    $this->swagger['definitions'][$definition_name] = $ret;
+                    $this->swagger['definitions'][$definitionName] = $ret;
                 }
             } else {
                 $property['default'] = $val;
@@ -233,11 +236,11 @@ class SwaggerJson
     public function save()
     {
         $this->swagger['tags'] = array_values($this->swagger['tags'] ?? []);
-        $output_file = $this->swagger['output_file'] ?? '';
-        if (!$output_file) {
+        $outputFile = $this->swagger['output_file'] ?? '';
+        if (!$outputFile) {
             return;
         }
         unset($this->swagger['output_file']);
-        file_put_contents($output_file, json_encode($this->swagger, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+        file_put_contents($outputFile, json_encode($this->swagger, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
     }
 }

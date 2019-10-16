@@ -1,50 +1,52 @@
 {
-    "name": "daodao97/apidog",
-    "type": "library",
+    "name": "hyperf/apidog",
+    "description": "A swagger library for Hyperf.",
     "license": "MIT",
     "keywords": [
         "php",
-        "hyperf"
+        "swoole",
+        "hyperf",
+        "swagger"
     ],
-    "description": "Api Watch Dog: one Api params validation and swagger doc lib for hyperf",
-    "autoload": {
-        "psr-4": {
-            "Hyperf\\Apidog\\": "src/"
-        },
-      "files": [
-        "./src/function.php"
-      ]
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "HyperfTest\\": "tests"
-        }
+    "support": {
     },
     "require": {
         "php": ">=7.2",
-        "ext-swoole": ">=4.3",
-        "hyperf/di": "^1.0.0",
-        "hyperf/logger": "^1.0.0",
-        "hyperf/utils": "^1.0.0",
-        "seld/jsonlint": "^1.7"
+        "hyperf/command": "~1.1.0",
+        "hyperf/validation": "~1.1.0"
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^2.14",
-        "hyperf/testing": "^1.0.0",
-        "phpstan/phpstan": "^0.10.5",
-        "swoft/swoole-ide-helper": "dev-master"
+        "malukenho/docheader": "^0.1.6",
+        "mockery/mockery": "^1.0",
+        "phpunit/phpunit": "^7.0.0",
+        "friendsofphp/php-cs-fixer": "^2.9"
+    },
+    "suggest": {
+    },
+    "autoload": {
+        "psr-4": {
+            "Hyperf\\Apidog\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+        }
     },
     "config": {
         "sort-packages": true
     },
-    "scripts": {
-        "test": "co-phpunit -c phpunit.xml --colors=always",
-        "analyze": "phpstan analyse --memory-limit 300M -l 0 ./src",
-        "cs-fix": "php-cs-fixer fix $1"
-    },
     "extra": {
+        "branch-alias": {
+            "dev-master": "1.1.0"
+        },
         "hyperf": {
             "config": "Hyperf\\Apidog\\ConfigProvider"
         }
+    },
+    "bin": [
+    ],
+    "scripts": {
+        "cs-fix": "php-cs-fixer fix $1",
+        "test": "phpunit --colors=always"
     }
 }

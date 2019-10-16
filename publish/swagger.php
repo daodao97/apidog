@@ -8,6 +8,6 @@ return [
         'version' => '1.0.0',
         'title' => 'HYPERF API DOC',
     ],
-    'host' => 'test.pt.com',
+    'host' => 'hyperf.io',
     'schemes' => ['http']
 ];

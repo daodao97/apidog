@@ -2,7 +2,13 @@
 declare(strict_types = 1);
 namespace Hyperf\Apidog;
 
+use Hyperf\HttpServer\Annotation\DeleteMapping;
+use Hyperf\HttpServer\Annotation\GetMapping;
 use Hyperf\HttpServer\Annotation\Mapping;
+use Hyperf\HttpServer\Annotation\PatchMapping;
+use Hyperf\HttpServer\Annotation\PostMapping;
+use Hyperf\HttpServer\Annotation\PutMapping;
+use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\MiddlewareManager;
 use Hyperf\HttpServer\Router\DispatcherFactory;
 use Hyperf\HttpServer\Annotation\Controller;
@@ -29,38 +35,38 @@ class DispathcerFactory extends DispatcherFactory
      */
     protected function handleController(string $className, Controller $annotation, array $methodMetadata, array $middlewares = []): void
     {
-        if (!$methodMetadata) {
+        if (! $methodMetadata) {
             return;
         }
         $prefix = $this->getPrefix($className, $annotation->prefix);
         $router = $this->getRouter($annotation->server);
-        $base_path = controllerNameToPath($className);
+        $basePath = $this->basePath($className);
+
         foreach ($methodMetadata as $methodName => $values) {
             $methodMiddlewares = $middlewares;
+            // Handle method level middlewares.
             if (isset($values)) {
                 $methodMiddlewares = array_merge($methodMiddlewares, $this->handleMiddleware($values));
                 $methodMiddlewares = array_unique($methodMiddlewares);
             }
+
             foreach ($values as $mapping) {
-                if (!($mapping instanceof Mapping)) {
+                if (!($mapping instanceof  Mapping)) {
                     continue;
                 }
                 if (!isset($mapping->methods)) {
                     continue;
                 }
-                $path = $base_path . '/' . $methodName;
+                $path = $mapping->path;
+
+                $path = $basePath . '/' . $methodName;
                 if ($mapping->path) {
                     $path = $mapping->path;
                 }
-                $router->addRoute($mapping->methods, $path, [
-                    $className,
-                    $methodName,
-                    $annotation->server,
+                $path = $prefix . $path;
+                $router->addRoute($mapping->methods, $path, [$className, $methodName], [
+                    'middleware' => $methodMiddlewares,
                 ]);
-                foreach ($mapping->methods as $mappingMethod) {
-                    MiddlewareManager::addMiddlewares($annotation->server, $path, $mappingMethod, $methodMiddlewares);
-                }
-
                 $this->swagger->addPath($className, $methodName);
             }
         }
@@ -77,4 +83,12 @@ class DispathcerFactory extends DispatcherFactory
         $this->swagger->save();
     }
 
+    public function basePath($className)
+    {
+        $path = strtolower($className);
+        $path = str_replace('\\', '/', $path);
+        $path = str_replace('app/controller', '', $path);
+        $path = str_replace('controller', '', $path);
+        return $path;
+    }
 }
