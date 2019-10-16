@@ -12,7 +12,6 @@
     },
     "require": {
         "php": ">=7.2",
-        "hyperf/command": "~1.1.0",
         "hyperf/validation": "~1.1.0"
     },
     "require-dev": {

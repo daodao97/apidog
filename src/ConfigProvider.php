@@ -22,7 +22,6 @@ class ConfigProvider
     {
         return [
             'commands' => [
-                GenCommand::class,
             ],
             'dependencies' => [
                 \Hyperf\Apidog\Validation\ValidationInterface::class => \Hyperf\Apidog\Validation\ApiParamsValidation::class,
