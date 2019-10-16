@@ -2,6 +2,7 @@
 namespace Hyperf\Apidog\Validation;
 
 use Hyperf\Di\Annotation\Inject;
+use Hyperf\Utils\Arr;
 
 class Validation implements ValidationInterface
 {
@@ -25,7 +26,7 @@ class Validation implements ValidationInterface
             $tree = $key_tree ? $key_tree . '.' . $field_name : $field_name;
             if (is_array($rule)) {
                 //todo 索引数组的验证
-                $ret = $this->check($rule, array_get_node($field_name, $data, []), $obj, $tree);
+                $ret = $this->check($rule, Arr::get($data, $field_name, []), $obj, $tree);
                 if ($ret === false) {
                     return false;
                 }
@@ -33,7 +34,7 @@ class Validation implements ValidationInterface
                 continue;
             }
             $field_label = $field_name_label[1] ?? '';
-            $field_value = array_get_node($field_name, $data);
+            $field_value = Arr::get($field_name, $data);
             $constraints = explode('|', $rule);
             $is_required = in_array('required', $constraints);
             if (!$is_required && is_null($field_value)) {

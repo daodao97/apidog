@@ -57,13 +57,11 @@ class DispathcerFactory extends DispatcherFactory
                 if (!isset($mapping->methods)) {
                     continue;
                 }
-                $path = $mapping->path;
 
                 $path = $basePath . '/' . $methodName;
                 if ($mapping->path) {
                     $path = $mapping->path;
                 }
-                $path = $prefix . $path;
                 $router->addRoute($mapping->methods, $path, [$className, $methodName], [
                     'middleware' => $methodMiddlewares,
                 ]);
