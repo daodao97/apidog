@@ -9,7 +9,7 @@
 ## 安装
 
 ```
-composer require daodao97/apidog dev-master
+composer require daodao97/apidog:~1.1.0 
 ```
 
 ## 配置
@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 return [
     'http' => [
-        Hyperf\Apidog\Middleware\ValidationMiddleware::class,
+        Hyperf\Apidog\Middleware\ApiValidationMiddleware::class,
     ],
 ];
 

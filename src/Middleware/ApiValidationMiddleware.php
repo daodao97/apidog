@@ -12,6 +12,7 @@ use Hyperf\HttpMessage\Stream\SwooleStream;
 use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\HttpServer\Contract\ResponseInterface as HttpResponse;
 use Hyperf\HttpServer\CoreMiddleware;
+use Hyperf\HttpServer\Router\Handler;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -57,7 +58,16 @@ class ApiValidationMiddleware extends CoreMiddleware
 
             return $handler->handle($request);
         }
-        [$controller, $action] = $this->prepareHandler($routes[1]->callback);
+
+        if ($routes[1] instanceof Handler) {
+            [$controller, $action] = [
+                $routes[1]->callback[0],
+                $routes[1]->callback[1]
+            ];
+        } else {
+            [$controller, $action] = $this->prepareHandler($routes[1]);
+        }
+
         $controllerInstance = $this->container->get($controller);
         $annotations = ApiAnnotation::methodMetadata($controller, $action);
         $header_rules = [];
@@ -95,7 +105,6 @@ class ApiValidationMiddleware extends CoreMiddleware
 
         if ($query_rules) {
             [$data, $error] = $this->check($query_rules, $request->getQueryParams(), $controllerInstance);
-            dump($data, $error);
             if ($data === false) {
                 return $this->response->json([
                     'code' => -1,
