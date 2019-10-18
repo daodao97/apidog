@@ -34,7 +34,7 @@ class Validation implements ValidationInterface
                 continue;
             }
             $field_label = $field_name_label[1] ?? '';
-            $field_value = Arr::get($field_name, $data);
+            $field_value = Arr::get($data, $field_name);
             $constraints = explode('|', $rule);
             $is_required = in_array('required', $constraints);
             if (!$is_required && is_null($field_value)) {
