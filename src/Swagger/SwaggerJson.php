@@ -49,7 +49,12 @@ class SwaggerJson
         $base_path = $this->basePath($className);
         $path = $base_path . '/' . $methodName;
         if ($mapping->path) {
-            $path = $mapping->path;
+            $justId = preg_match('/{.*}/', $mapping->path);
+            if ($justId) {
+                $path = $base_path . '/' . $mapping->path;
+            } else {
+                $path = $mapping->path;
+            }
         }
         $method = strtolower($mapping->methods[0]);
         $this->swagger['paths'][$path][$method] = [
