@@ -98,7 +98,7 @@ class ApiValidationMiddleware extends CoreMiddleware
             if ($data === false) {
                 return $this->response->json([
                     'code' => -1,
-                    'message' => $error
+                    'message' => implode(PHP_EOL, $error)
                 ]);
             }
         }
@@ -108,7 +108,7 @@ class ApiValidationMiddleware extends CoreMiddleware
             if ($data === false) {
                 return $this->response->json([
                     'code' => -1,
-                    'message' => $error
+                    'message' => implode(PHP_EOL, $error)
                 ]);
             }
             Context::set(ServerRequestInterface::class, $request->withQueryParams($data));
@@ -119,7 +119,7 @@ class ApiValidationMiddleware extends CoreMiddleware
             if ($data === false) {
                 return $this->response->json([
                     'code' => -1,
-                    'message' => $error
+                    'message' => implode(PHP_EOL, $error)
                 ]);
             }
             Context::set(ServerRequestInterface::class, $request->withBody(new SwooleStream(json_encode($data))));
@@ -130,7 +130,7 @@ class ApiValidationMiddleware extends CoreMiddleware
             if ($data === false) {
                 return $this->response->json([
                     'code' => -1,
-                    'message' => $error
+                    'message' => implode(PHP_EOL, $error)
                 ]);
             }
             Context::set(ServerRequestInterface::class, $request->withParsedBody($data));
