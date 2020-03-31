@@ -2,6 +2,9 @@
 declare(strict_types = 1);
 namespace Hyperf\Apidog;
 
+use Hyperf\Apidog\Annotation\ApiController;
+use Hyperf\Apidog\Swagger\SwaggerJson;
+use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\DeleteMapping;
 use Hyperf\HttpServer\Annotation\GetMapping;
 use Hyperf\HttpServer\Annotation\Mapping;
@@ -11,9 +14,6 @@ use Hyperf\HttpServer\Annotation\PutMapping;
 use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\MiddlewareManager;
 use Hyperf\HttpServer\Router\DispatcherFactory;
-use Hyperf\HttpServer\Annotation\Controller;
-use Hyperf\Apidog\Annotation\ApiController;
-use Hyperf\Apidog\Swagger\SwaggerJson;
 
 class DispathcerFactory extends DispatcherFactory
 {
@@ -51,26 +51,25 @@ class DispathcerFactory extends DispatcherFactory
             }
 
             foreach ($values as $mapping) {
-                if (!($mapping instanceof  Mapping)) {
+                if (!($mapping instanceof Mapping)) {
                     continue;
                 }
                 if (!isset($mapping->methods)) {
                     continue;
                 }
 
-                $path = $basePath . '/' . $methodName;
-                if ($mapping->path) {
-                    $justId = preg_match('/{.*}/', $mapping->path);
-                    if ($justId) {
-                        $path = $basePath . '/' . $mapping->path;
-                    } else {
-                        $path = $mapping->path;
-                    }
+                $path = $mapping->path;
+
+                if ($path === '') {
+                    $path = $prefix;
+                } elseif ($path[0] !== '/') {
+                    $path = $prefix . '/' . $path;
                 }
+
                 $router->addRoute($mapping->methods, $path, [$className, $methodName], [
                     'middleware' => $methodMiddlewares,
                 ]);
-                $this->swagger->addPath($className, $methodName);
+                $this->swagger->addPath($className, $methodName, $prefix);
             }
         }
     }
