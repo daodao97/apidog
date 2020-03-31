@@ -22,7 +22,7 @@ class SwaggerJson
         $this->swagger = $this->config->get('swagger');
     }
 
-    public function addPath($className, $methodName)
+    public function addPath($className, $methodName, $prefix)
     {
         $classAnnotation = ApiAnnotation::classMetadata($className);
         $methodAnnotations = ApiAnnotation::methodMetadata($className, $methodName);
@@ -46,15 +46,12 @@ class SwaggerJson
             'name' => $tag,
             'description' => $classAnnotation->description,
         ];
-        $base_path = $this->basePath($className);
-        $path = $base_path . '/' . $methodName;
-        if ($mapping->path) {
-            $justId = preg_match('/{.*}/', $mapping->path);
-            if ($justId) {
-                $path = $base_path . '/' . $mapping->path;
-            } else {
-                $path = $mapping->path;
-            }
+
+        $path = $mapping->path;
+        if ($path === '') {
+            $path = $prefix;
+        } elseif ($path[0] !== '/') {
+            $path = $prefix . '/' . $path;
         }
         $method = strtolower($mapping->methods[0]);
         $this->swagger['paths'][$path][$method] = [
