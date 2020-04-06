@@ -42,6 +42,9 @@ class SwaggerJson
             }
         }
         $tag = $classAnnotation->tag ?: $className;
+        if ($tag == 'swagger') {
+            return;
+        }
         $this->swagger['tags'][$tag] = [
             'name' => $tag,
             'description' => $classAnnotation->description,
@@ -161,6 +164,7 @@ class SwaggerJson
                 'description' => $item->description,
                 'required' => $item->required,
                 'type' => $item->type,
+                'default' => $item->default,
             ];
             if ($item instanceof Body) {
                 $modelName = implode('', array_map('ucfirst', explode('/', $path)));
