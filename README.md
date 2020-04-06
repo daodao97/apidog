@@ -47,7 +47,7 @@ declare(strict_types=1);
 
 return [
     'dependencies' => [
-        Hyperf\HttpServer\Router\DispatcherFactory::class => Hyperf\Apidog\DispathcerFactory::class
+        Hyperf\HttpServer\Router\DispatcherFactory::class => Hyperf\Apidog\DispatcherFactory::class
     ],
 ];
 

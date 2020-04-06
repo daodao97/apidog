@@ -5,17 +5,10 @@ namespace Hyperf\Apidog;
 use Hyperf\Apidog\Annotation\ApiController;
 use Hyperf\Apidog\Swagger\SwaggerJson;
 use Hyperf\HttpServer\Annotation\Controller;
-use Hyperf\HttpServer\Annotation\DeleteMapping;
-use Hyperf\HttpServer\Annotation\GetMapping;
 use Hyperf\HttpServer\Annotation\Mapping;
-use Hyperf\HttpServer\Annotation\PatchMapping;
-use Hyperf\HttpServer\Annotation\PostMapping;
-use Hyperf\HttpServer\Annotation\PutMapping;
-use Hyperf\HttpServer\Annotation\RequestMapping;
-use Hyperf\HttpServer\MiddlewareManager;
-use Hyperf\HttpServer\Router\DispatcherFactory;
+use Hyperf\HttpServer\Router\DispatcherFactory as HyperfDispatcherFactory;
 
-class DispathcerFactory extends DispatcherFactory
+class DispatcherFactory extends HyperfDispatcherFactory
 {
 
     /**

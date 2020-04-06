@@ -1,31 +1,17 @@
 <?php
 
-declare(strict_types=1);
-/**
- * This file is part of Hyperf.
- *
- * @link     https://www.hyperf.io
- * @document https://doc.hyperf.io
- * @contact  group@hyperf.io
- * @license  https://github.com/hyperf-cloud/hyperf/blob/master/LICENSE
- */
-
+declare(strict_types = 1);
 namespace Hyperf\Apidog;
-
-use Hyperf\Cache\CacheListenerCollector;
-use Hyperf\HttpServer\Router\DispatcherFactory;
-use Hyperf\Apidog\Command\GenCommand;
 
 class ConfigProvider
 {
     public function __invoke(): array
     {
         return [
-            'commands' => [
-            ],
+            'commands' => [],
             'dependencies' => [
                 \Hyperf\Apidog\Validation\ValidationInterface::class => \Hyperf\Apidog\Validation\ApiParamsValidation::class,
-                \Hyperf\HttpServer\Router\DispatcherFactory::class => \Hyperf\Apidog\DispathcerFactory::class,
+                \Hyperf\HttpServer\Router\DispatcherFactory::class => \Hyperf\Apidog\DispatcherFactory::class,
             ],
             'annotations' => [
                 'scan' => [
