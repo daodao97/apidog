@@ -95,7 +95,7 @@ class UserController extends Controller
     /**
      * @DeleteApi(path="/user", description="删除用户")
      * @Body(rules={
-     *     "id|用户id":"require|int|gt[0]"
+     *     "id|用户id":"required|int|gt[0]"
      * })
      * @ApiResponse(code="-1", description="参数错误")
      * @ApiResponse(code="0", description="删除成功", schema={"id":1})
