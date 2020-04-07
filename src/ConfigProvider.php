@@ -24,7 +24,7 @@ class ConfigProvider
             'commands' => [
             ],
             'dependencies' => [
-                \Hyperf\Apidog\Validation\ValidationInterface::class => \Hyperf\Apidog\Validation\ApiParamsValidation::class,
+                \Hyperf\Apidog\Validation\ValidationInterface::class => \Hyperf\Apidog\Validation\Validation::class,
                 \Hyperf\HttpServer\Router\DispatcherFactory::class => \Hyperf\Apidog\DispathcerFactory::class,
             ],
             'annotations' => [
