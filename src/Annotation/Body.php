@@ -25,10 +25,10 @@ class Body extends Param
                 }
             }
         }
-        $this->setRquire()->setType();
+        $this->setRequire()->setType();
     }
 
-    public function setRquire()
+    public function setRequire()
     {
 
         $this->required = strpos(json_encode($this->rules), 'required') !== false;

@@ -15,7 +15,7 @@ abstract class Param extends AbstractAnnotation
     public function __construct($value = null)
     {
         parent::__construct($value);
-        $this->setName()->setDescription()->setRquire()->setType();
+        $this->setName()->setDescription()->setRequire()->setType();
     }
 
     public function setName()
@@ -32,7 +32,7 @@ abstract class Param extends AbstractAnnotation
         return $this;
     }
 
-    public function setRquire()
+    public function setRequire()
     {
         $this->required = strpos($this->rule, 'required') !== false;
 
