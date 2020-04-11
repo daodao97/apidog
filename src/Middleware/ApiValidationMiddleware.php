@@ -135,7 +135,7 @@ class ApiValidationMiddleware extends CoreMiddleware
             }
             Context::set(ServerRequestInterface::class, $request->withParsedBody($data));
         }
-
+        Context::set('validator.data', $data);
         return $handler->handle($request);
     }
 
