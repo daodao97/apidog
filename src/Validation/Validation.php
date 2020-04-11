@@ -1,524 +1,258 @@
 <?php
 namespace Hyperf\Apidog\Validation;
 
-use Hyperf\Di\Annotation\Inject;
+use Hyperf\Utils\ApplicationContext;
 use Hyperf\Utils\Arr;
+use Hyperf\Utils\Str;
+use Hyperf\Validation\Contract\PresenceVerifierInterface;
+use Hyperf\Validation\Contract\Rule;
+use Hyperf\Validation\ValidatorFactory;
 
-class Validation implements ValidationInterface
+class Validation
 {
+    use ValidationCustomRule;
+
+    /** @var ValidatorFactory */
+    public $factory;
+
+    public function __construct()
+    {
+        $this->factory = make(ValidatorFactory::class);
+    }
+
+    public function check($rules, $data, $obj = null)
+    {
+        foreach ($data as $key => $val) {
+            if (strpos($key, '.') !== false) {
+                Arr::set($data, $key, $val);
+                unset($data[$key]);
+            }
+        }
+        $map = [];
+        $real_rules = [];
+        $white_data = [];
+
+        foreach ($rules as $key => $rule) {
+            $field_extra = explode('|', $key);
+            $field = $field_extra[0];
+            if (!$rule && Arr::get($data, $field)) {
+                $white_data[$field] = Arr::get($data, $field);
+                continue;
+            }
+            $title = $field_extra[1] ?? $field_extra[0];
+            $rules = is_array($rule) ? $rule : explode('|', $rule);
+            foreach ($rules as $index => &$item) {
+                if ($index === 'children') {
+                    $request_sub_data = Arr::get($data, $field);
+                    if ($item['repeat']) {
+                        foreach ($request_sub_data as $part_index => $part) {
+                            [
+                                $sub_data,
+                                $sub_error,
+                            ] = $this->check($item['rules'], $part);
+                            if ($sub_error) {
+                                $sub_error[0] = $title . '的第' . ($part_index + 1) . '项 ' . $sub_error[0];
+
+                                return [$sub_data, $sub_error];
+                            }
+                        }
+                    } else {
+                        [
+                            $sub_data,
+                            $sub_error,
+                        ] = $this->check($item, $request_sub_data);
+                        if ($sub_error) {
+                            $sub_error[0] = $title . '中的 ' . $sub_error[0];
+
+                            return [$sub_data, $sub_error];
+                        }
+                    }
+                    continue;
+                }
+                if ($item == 'json') {
+                    $item = 'array';
+                }
+                if (method_exists($this, $item)) {
+                    $item = $this->makeCustomRule($item);
+                } elseif (is_string($item) && Str::startsWith($item, 'cb_')) {
+                    $item = $this->makeObjectCallback(Str::replaceFirst('cb_', '', $item), $obj);
+                }
+                unset($item);
+            }
+            $real_rules[$field] = $rules;
+            $map[$field] = $title;
+        }
+
+        $validator = $this->factory->make($data, $real_rules);
+
+        $verifier =  ApplicationContext::getContainer()->get(PresenceVerifierInterface::class);
+        $validator->setPresenceVerifier($verifier);
+
+        $fails = $validator->fails();
+        $errors = [];
+        if ($fails) {
+            $errors = $validator->errors()->all();
+            foreach ($errors as &$item) {
+                $filed_keys = array_keys($map);
+                rsort($filed_keys);
+                krsort($map);
+                $filed_keys = array_map(function ($key) {
+                    if (strpos($key, '.') === false) {
+                        return str_replace('_', ' ', $key);
+                    }
+                    return $key;
+                }, $filed_keys);
+                $item = str_replace($filed_keys, array_values($map), $item);
+                unset($item);
+            }
+
+            return [
+                null,
+                $errors,
+            ];
+        }
+
+        $filter_data = array_merge($this->parseData($validator->validated()), $white_data);
+
+        $real_data = [];
+        foreach ($filter_data as $key => $val) {
+            Arr::set($real_data, $key, $val);
+        }
+
+        $real_data = array_map_recursive(function ($item) {
+            return is_string($item) ? trim($item) : $item;
+        }, $real_data);
+
+        return [
+            $fails ? null : $real_data,
+            $errors,
+        ];
+    }
+
+    public function makeCustomRule($custom_rule)
+    {
+        return new class ($custom_rule, $this) implements Rule
+        {
+            public $custom_rule;
+
+            public $validation;
+
+            public $error = "%s ";
+
+            public $attribute;
+
+            public function __construct($custom_rule, $validation)
+            {
+                $this->custom_rule = $custom_rule;
+                $this->validation = $validation;
+            }
+
+            public function passes($attribute, $value): bool
+            {
+                $this->attribute = $attribute;
+                $rule = $this->custom_rule;
+                if (strpos($rule, ':') !== false) {
+                    $rule = explode(':', $rule)[0];
+                    $extra = explode(',', explode(':', $rule)[1]);
+                    $ret = $this->validation->$rule($attribute, $value, $extra);
+                    if (is_string($ret)) {
+                        $this->error .= $ret;
+
+                        return false;
+                    }
+
+                    return true;
+                }
+                $ret = $this->validation->$rule($attribute, $value);
+                if (is_string($ret)) {
+                    $this->error .= $ret;
+
+                    return false;
+                }
+
+                return true;
+            }
+
+            public function message()
+            {
+                return sprintf($this->error, $this->attribute);
+            }
+        };
+    }
+
+    public function makeObjectCallback($method, $object)
+    {
+        return new class ($method, $this, $object) implements Rule
+        {
+            public $custom_rule;
+
+            public $validation;
+
+            public $object;
+
+            public $error = "%s ";
+
+            public $attribute;
+
+            public function __construct($custom_rule, $validation, $object)
+            {
+                $this->custom_rule = $custom_rule;
+                $this->validation = $validation;
+                $this->object = $object;
+            }
+
+            public function passes($attribute, $value): bool
+            {
+                $this->attribute = $attribute;
+                $rule = $this->custom_rule;
+                if (strpos($rule, ':') !== false) {
+                    $rule = explode(':', $rule)[0];
+                    $extra = explode(',', explode(':', $rule)[1]);
+                    $ret = $this->object->$rule($attribute, $value, $extra);
+                    if (is_string($ret)) {
+                        $this->error .= $ret;
+
+                        return false;
+                    }
+
+                    return true;
+                }
+                $ret = $this->object->$rule($attribute, $value);
+                if (is_string($ret)) {
+                    $this->error .= $ret;
+
+                    return false;
+                }
+
+                return true;
+            }
+
+            public function message()
+            {
+                return sprintf($this->error, $this->attribute);
+            }
+        };
+    }
 
     /**
-     * @Inject()
-     * @var \Hyperf\Logger\LoggerFactory
+     * Parse the data array, converting -> to dots
      */
-    public $logger;
-    public $data = [];
-    public $errors = [];
-
-    public function check(array $rules, array $data, $obj = null, $key_tree = null)
+    public function parseData(array $data): array
     {
-        $this->data = $data;
-        $this->errors = [];
-        $final_data = [];
-        foreach ($rules as $field => $rule) {
-            $field_name_label = explode('|', $field);
-            $field_name = $field_name_label[0];
-            $tree = $key_tree ? $key_tree . '.' . $field_name : $field_name;
-            if (is_array($rule)) {
-                //todo 索引数组的验证
-                $ret = $this->check($rule, Arr::get($data, $field_name, []), $obj, $tree);
-                if ($ret === false) {
-                    return false;
-                }
-                $final_data[$field_name] = $ret;
-                continue;
-            }
-            $field_label = $field_name_label[1] ?? '';
-            $field_value = Arr::get($data, $field_name);
-            $constraints = explode('|', $rule);
-            $is_required = in_array('required', $constraints);
-            if (!$is_required && is_null($field_value)) {
-                continue;
-            }
-            foreach ($constraints as $constraint) {
-                preg_match('/\[(.*)\]/', $constraint, $m);
-                $func = preg_replace('/\[.*\]/', '', $constraint);
-                $option = $m[1] ?? null;
-                $func_rule = 'rule_' . $func;
-                if (method_exists($this, $func_rule)) {
-                    $check = call_user_func_array([
-                        $this,
-                        $func_rule,
-                    ], [$field_value, $option]);
-                    if ($check && !isset($final_data[$field_name])) {
-                        $final_data[$field_name] = $field_value;
-                    }
-                    $this->log()->info(sprintf('validation key:%s rule:%s result:%s', $field_name, $func_rule, $check ? 'true' : 'false'));
-                }
-                $func_filter = 'filter_' . $func;
-                if (method_exists($this, $func_filter)) {
-                    $filter_value = call_user_func_array([
-                        $this,
-                        $func_filter,
-                    ], [$field_value, $option]);
-                    $this->log()->info(sprintf('validation key:%s filter:%s result:%s', $field_name, $func_filter, $filter_value));
-                    $final_data[$field_name] = $filter_value;
-                }
-                $customMethod = str_replace('cb_', '', $func);
-                if (strpos($func, 'cb_') !== false && method_exists($obj, $customMethod)) {
-                    $check = $obj->$customMethod($field_value, $option);
-                    if ($check === true) {
-                        $final_data[$field_name] = $field_value;
-                    } else {
-                        $this->errors[] = $check;
-                    }
-                    $this->log()->info(sprintf('validation key:%s cb:%s result:%s', $field_name, $customMethod, $check === true ? 'true' : 'false'));
-                }
-                if ($this->errors) {
-                    $label = $field_label ? $field_label . '(' . $tree . ')' : $tree;
-                    foreach ($this->errors as $index => $each) {
-                        $this->errors[$index] = sprintf($each, $label);
-                    }
+        $newData = [];
 
-                    return false;
-                }
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                $value = $this->parseData($value);
+            }
+
+            if (Str::contains((string)$key, '->')) {
+                $newData[str_replace('->', '.', $key)] = $value;
+            } else {
+                $newData[$key] = $value;
             }
         }
 
-        return $final_data;
-    }
-
-    public function filter_bool($val)
-    {
-        if (empty($val)
-            || in_array(strtolower($val), [
-                'false',
-                'null',
-                'nil',
-                'none',
-            ])) {
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function filter_int($val)
-    {
-        return (int)$val;
-    }
-
-    public function rule_any($val)
-    {
-        return true;
-    }
-
-    public function rule_required($val)
-    {
-        if ($val === '' || is_null($val)) {
-            $this->errors[] = '%s为必填项';
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function rule_uri($val)
-    {
-        if ($val === '') {
-            return true;
-        }
-        // 构造url格式
-        if (!preg_match('@^http@i', $val)) {
-            $val = 'http://xxx.com/' . $val;
-        }
-
-        return $this->rule_url($val);
-    }
-
-    public function rule_url($val)
-    {
-        if ($val === '') {
-            return true;
-        }
-        $pattern = "/^(http|https|ftp):\/\/([A-Z0-9][A-Z0-9_-]*(?:\.[A-Z0-9][A-Z0-9_-]*)+):?(\d+)?\/?/i";
-        if (!preg_match($pattern, $val)) {
-            $this->errors[] = '%s不是合法的URL';
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function rule_email($val)
-    {
-        if ($val === '') {
-            return true;
-        }
-        if (!preg_match("/^([a-z0-9\+_\-]+)(\.[a-z0-9\+_\-]+)*@([a-z0-9\-]+\.)+[a-z]{2,6}$/ix", $val)) {
-            $this->errors[] = '%s不是合法的Email地址';
-
-            return false;
-        }
-
-        return true;
-    }
-
-    //包含注释语法的JSON
-    public function rule_extended_json($val)
-    {
-        if ($val === '') {
-
-            return true;
-        }
-        $j = is_json_str($val, true);
-        if ($j) {
-            $this->errors[] = '%s不是合法的JSON:' . $j;
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function rule_json($val)
-    {
-        if ($val === '') {
-
-            return true;
-        }
-        $j = is_json_str($val);
-        if ($j) {
-            $this->errors[] = '%s不是合法的JSON:' . $j;
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function rule_date($val)
-    {
-        if ($val === '') {
-
-            return true;
-        }
-        $ret = strtotime($val);
-        if ($ret <= 0 || $ret === false || !preg_match('@^\d{4}-\d{2}-\d{2}$@', $val)) {
-            $this->errors[] = '%s不是有效日期';
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function rule_datetime($val)
-    {
-        if ($val === '') {
-
-            return true;
-        }
-        $ret = strtotime($val);
-        if ($ret <= 0 || $ret === false || !preg_match('@^\d{4}-\d{2}-\d{2}@', $val)) {
-            $this->errors[] = '%s不是有效日期时间';
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function rule_safe_password($val)
-    {
-        if ($val === '') {
-
-            return true;
-        }
-        if (strlen($val) < 8) {
-            $this->errors[] = '%s长度最少为8位';
-
-            return false;
-        }
-        $level = 0;
-        if (preg_match('@\d@', $val)) {
-            $level++;
-        }
-        if (preg_match('@[a-z]@', $val)) {
-            $level++;
-        }
-        if (preg_match('@[A-Z]@', $val)) {
-            $level++;
-        }
-        if (preg_match('@[^0-9a-zA-Z]@', $val)) {
-            $level++;
-        }
-        if ($level < 3) {
-            $this->errors[] = '您设置的%s太简单，密码必须包含数字、大小写字母、其它符号中的三种及以上';
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function rule_in($val, $list)
-    {
-        if ($val === '') {
-
-            return true;
-        }
-        $ok = in_array($val, explode("\001", $list));
-        if (!$ok) {
-            $this->errors[] = '%s不是有效值';
-        }
-
-        return $ok;
-    }
-
-    function rule_max_width($val, $len)
-    {
-        if ($val === '') {
-
-            return true;
-        }
-        $res = (mb_strlen($val) > $len) ? false : true;
-        if (!$res) {
-            $this->errors[] = "%s最大长度为{$len}";
-
-            return false;
-        }
-
-        return $res;
-    }
-
-    public function rule_natural($val)
-    {
-        if ($val === '') {
-
-            return true;
-        }
-        if (!preg_match('/^[0-9]+$/', $val)) {
-            $this->errors[] = '%s不是合法的自然数';
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function rule_int($val)
-    {
-        if ($val === '') {
-
-            return true;
-        }
-        if (filter_var($val, FILTER_VALIDATE_INT) === false) {
-            $this->errors[] = '%s不是合法的整数';
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function rule_array($val)
-    {
-        if (!is_array($val)) {
-            $this->errors[] = '%s需是数组类型';
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function rule_alpha($val)
-    {
-        if ($val === '') {
-
-            return true;
-        }
-        if (!preg_match("/^([a-z])+$/i", $val)) {
-            $this->errors[] = '%s仅能包含字母';
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function rule_alpha_numeric($val)
-    {
-        if ($val === '') {
-
-            return true;
-        }
-        if (!preg_match("/^([a-z0-9])+$/i", $val)) {
-            $this->errors[] = '%s仅能包含字母和数字';
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function rule_alpha_dash($val)
-    {
-        if ($val === '') {
-
-            return true;
-        }
-        if (!preg_match("/^([-a-z0-9_-])+$/i", $val)) {
-            $this->errors[] = '%s仅能包含字母、数字、_-';
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function rule_numeric($val)
-    {
-        if ($val === '') {
-
-            return true;
-        }
-        if (!is_numeric($val)) {
-            $this->errors[] = '%s不是合法数字';
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function rule_match($val, $match_field)
-    {
-        return $val == array_get_node($match_field, $this->data);
-    }
-
-    public function rule_mobile($val)
-    {
-        if ($val === '') {
-
-            return true;
-        }
-        if (strlen($val) != 11) {
-            $this->errors[] = '%s长度为11位';
-
-            return false;
-        }
-        if (!preg_match('/^1\d{10}$/', (string)$val)) {
-            $this->errors[] = '%s格式不正确';
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function rule_gt($val, $n)
-    {
-        if ($val === '') {
-
-            return true;
-        }
-        if (!$this->rule_numeric($val)) {
-
-            return false;
-        }
-        if ($val <= $n) {
-            $this->errors[] = '%s必须大于' . $n;
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function rule_ge($val, $n)
-    {
-        if ($val === '') {
-
-            return true;
-        }
-        if (!$this->rule_numeric($val)) {
-
-            return false;
-        }
-        if ($val < $n) {
-            $this->errors[] = '%s必须大于等于' . $n;
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function rule_lt($val, $n)
-    {
-        if ($val === '') {
-
-            return true;
-        }
-        if (!$this->rule_numeric($val)) {
-
-            return false;
-        }
-        if ($val >= $n) {
-            $this->errors[] = '%s必须小于' . $n;
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function rule_le($val, $n)
-    {
-        if ($val === '') {
-
-            return true;
-        }
-        if (!$this->rule_numeric($val)) {
-
-            return false;
-        }
-        if ($val > $n) {
-            $this->errors[] = '%s必须小于等于' . $n;
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function rule_enum($val, $n)
-    {
-        if ($val === '') {
-
-            return true;
-        }
-        if (!in_array($val, explode(',', $n))) {
-            $this->errors[] = '%s必须是 ' . $n . ' 其中之一';
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function getError()
-    {
-        return $this->errors;
-    }
-
-    public function log()
-    {
-        return $this->logger->get('validation');
+        return $newData;
     }
 }

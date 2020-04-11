@@ -10,8 +10,10 @@ class ConfigProvider
         return [
             'commands' => [],
             'dependencies' => [
-                \Hyperf\Apidog\Validation\ValidationInterface::class => \Hyperf\Apidog\Validation\ApiParamsValidation::class,
-                \Hyperf\HttpServer\Router\DispatcherFactory::class => \Hyperf\Apidog\DispatcherFactory::class,
+                \Hyperf\HttpServer\Router\DispatcherFactory::class => DispatcherFactory::class
+            ],
+            'listeners' => [
+                BootAppConfListener::class,
             ],
             'annotations' => [
                 'scan' => [
@@ -23,9 +25,9 @@ class ConfigProvider
             'publish' => [
                 [
                     'id' => 'config',
-                    'description' => 'The config for swagger.',
-                    'source' => __DIR__ . '/../publish/swagger.php',
-                    'destination' => BASE_PATH . '/config/autoload/swagger.php',
+                    'description' => 'The config for apidog.',
+                    'source' => __DIR__ . '/../publish/apidog.php',
+                    'destination' => BASE_PATH . '/config/autoload/apidog.php',
                 ],
             ],
         ];

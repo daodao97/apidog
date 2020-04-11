@@ -3,7 +3,6 @@ declare(strict_types = 1);
 namespace Hyperf\Apidog;
 
 use Hyperf\Apidog\Annotation\ApiController;
-use Hyperf\Apidog\Swagger\SwaggerJson;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\Mapping;
 use Hyperf\HttpServer\Router\DispatcherFactory as HyperfDispatcherFactory;
@@ -11,21 +10,6 @@ use Hyperf\HttpServer\Router\DispatcherFactory as HyperfDispatcherFactory;
 class DispatcherFactory extends HyperfDispatcherFactory
 {
 
-    /**
-     * @var SwaggerJson
-     */
-    public $swagger;
-
-    public function __construct()
-    {
-        $this->swagger = new SwaggerJson();
-        parent::__construct();
-    }
-
-    /**
-     * 1. 根据注解注册路由
-     * 2. 根据注解生成swagger文件
-     */
     protected function handleController(string $className, Controller $annotation, array $methodMetadata, array $middlewares = []): void
     {
         if (! $methodMetadata) {
@@ -33,7 +17,6 @@ class DispatcherFactory extends HyperfDispatcherFactory
         }
         $prefix = $this->getPrefix($className, $annotation->prefix);
         $router = $this->getRouter($annotation->server);
-        $basePath = $this->basePath($className);
 
         foreach ($methodMetadata as $methodName => $values) {
             $methodMiddlewares = $middlewares;
@@ -62,7 +45,6 @@ class DispatcherFactory extends HyperfDispatcherFactory
                 $router->addRoute($mapping->methods, $path, [$className, $methodName], [
                     'middleware' => $methodMiddlewares,
                 ]);
-                $this->swagger->addPath($className, $methodName, $prefix);
             }
         }
     }
@@ -75,15 +57,6 @@ class DispatcherFactory extends HyperfDispatcherFactory
                 $this->handleController($className, $metadata['_c'][ApiController::class], $metadata['_m'] ?? [], $middlewares);
             }
         }
-        $this->swagger->save();
-    }
-
-    public function basePath($className)
-    {
-        $path = strtolower($className);
-        $path = str_replace('\\', '/', $path);
-        $path = str_replace('app/controller', '', $path);
-        $path = str_replace('controller', '', $path);
-        return $path;
+        parent::initAnnotationRoute($collector);
     }
 }

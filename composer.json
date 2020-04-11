@@ -1,40 +1,45 @@
 {
-    "name": "hyperf/apidog",
-    "description": "A swagger library for Hyperf.",
-    "license": "MIT",
-    "keywords": [
-        "php",
-        "swoole",
-        "hyperf",
-        "swagger"
-    ],
-    "support": {
+  "name": "daodao97/apidog",
+  "description": "A swagger library for Hyperf.",
+  "license": "MIT",
+  "keywords": [
+    "php",
+    "swoole",
+    "hyperf",
+    "swagger"
+  ],
+  "support": {
+  },
+  "require": {
+    "php": ">=7.2",
+    "hyperf/http-server": "^1.1",
+    "hyperf/logger": "^1.1",
+    "hyperf/validation": "~1.1.0"
+  },
+  "require-dev": {
+  },
+  "suggest": {
+  },
+  "autoload": {
+    "psr-4": {
+      "Hyperf\\Apidog\\": "src/"
     },
-    "require": {
-        "php": ">=7.2",
-        "hyperf/validation": "~1.1.0"
-    },
-    "require-dev": {
-    },
-    "suggest": {
-    },
-    "autoload": {
-        "psr-4": {
-            "Hyperf\\Apidog\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-        }
-    },
-    "config": {
-        "sort-packages": true
-    },
-    "extra": {
-        "hyperf": {
-            "config": "Hyperf\\Apidog\\ConfigProvider"
-        }
-    },
-    "bin": [
+    "files": [
+      "./src/function.php"
     ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+    }
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "extra": {
+    "hyperf": {
+      "config": "Hyperf\\Apidog\\ConfigProvider"
+    }
+  },
+  "bin": [
+  ]
 }

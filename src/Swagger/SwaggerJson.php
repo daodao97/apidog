@@ -7,6 +7,7 @@ use Hyperf\Apidog\Annotation\Param;
 use Hyperf\Apidog\ApiAnnotation;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\HttpServer\Annotation\Mapping;
+use Hyperf\Logger\LoggerFactory;
 use Hyperf\Utils\ApplicationContext;
 
 class SwaggerJson
@@ -16,16 +17,23 @@ class SwaggerJson
 
     public $swagger;
 
+    public $logger;
+
     public function __construct()
     {
-        $this->config = ApplicationContext::getContainer()->get(ConfigInterface::class);
-        $this->swagger = $this->config->get('swagger');
+        $container = ApplicationContext::getContainer();
+        $this->config = $container->get(ConfigInterface::class);
+        $this->logger = $container->get(LoggerFactory::class)->get('apidog');
+        $this->swagger = $this->config->get('apidog.swagger');
     }
 
-    public function addPath($className, $methodName, $prefix)
+    public function addPath($className, $methodName)
     {
         $classAnnotation = ApiAnnotation::classMetadata($className);
         $methodAnnotations = ApiAnnotation::methodMetadata($className, $methodName);
+        if (!$classAnnotation || !$methodAnnotations) {
+            return;
+        }
         $params = [];
         $responses = [];
         /** @var \Hyperf\Apidog\Annotation\GetApi $mapping */
@@ -42,15 +50,13 @@ class SwaggerJson
             }
         }
         $tag = $classAnnotation->tag ?: $className;
-        if ($tag == 'swagger') {
-            return;
-        }
         $this->swagger['tags'][$tag] = [
             'name' => $tag,
             'description' => $classAnnotation->description,
         ];
 
         $path = $mapping->path;
+        $prefix = $classAnnotation->prefix;
         if ($path === '') {
             $path = $prefix;
         } elseif ($path[0] !== '/') {
@@ -73,15 +79,6 @@ class SwaggerJson
             'description' => $mapping->description,
         ];
 
-    }
-
-    public function basePath($className)
-    {
-        $path = strtolower($className);
-        $path = str_replace('\\', '/', $path);
-        $path = str_replace('app/controller', '', $path);
-        $path = str_replace('controller', '', $path);
-        return $path;
     }
 
     public function initModel()
@@ -191,7 +188,7 @@ class SwaggerJson
             ];
             if ($item->schema) {
                 $modelName = implode('', array_map('ucfirst', explode('/', $path))) . ucfirst($method) .'Response' . $item->code;
-                $ret = $this->responseSchemaTodefinition($item->schema, $modelName);
+                $ret = $this->responseSchemaToDefinition($item->schema, $modelName);
                 if ($ret) {
                     $resp[$item->code]['schema']['$ref'] = '#/definitions/' . $modelName;
                 }
@@ -201,7 +198,7 @@ class SwaggerJson
         return $resp;
     }
 
-    public function responseSchemaTodefinition($schema, $modelName, $level = 0)
+    public function responseSchemaToDefinition($schema, $modelName, $level = 0)
     {
         if (!$schema) {
             return false;
@@ -216,7 +213,7 @@ class SwaggerJson
                 if ($property['type'] == 'array' && isset($val[0])) {
                     if (is_array($val[0])) {
                         $property['type'] = 'array';
-                        $ret = $this->responseSchemaTodefinition($val[0], $definitionName, 1);
+                        $ret = $this->responseSchemaToDefinition($val[0], $definitionName, 1);
                         $property['items']['$ref'] = '#/definitions/' . $definitionName;
                     } else {
                         $property['type'] = 'array';
@@ -224,7 +221,7 @@ class SwaggerJson
                     }
                 } else {
                     $property['type'] = 'object';
-                    $ret = $this->responseSchemaTodefinition($val, $definitionName, 1);
+                    $ret = $this->responseSchemaToDefinition($val, $definitionName, 1);
                     $property['$ref'] = '#/definitions/' . $definitionName;
                 }
                 if (isset($ret)) {
@@ -245,11 +242,12 @@ class SwaggerJson
     public function save()
     {
         $this->swagger['tags'] = array_values($this->swagger['tags'] ?? []);
-        $outputFile = $this->swagger['output_file'] ?? '';
+        $outputFile = $this->config->get('apidog.output_file');
         if (!$outputFile) {
+            $this->logger->error('/config/autoload/apidog.php need set output_file');
             return;
         }
-        unset($this->swagger['output_file']);
         file_put_contents($outputFile, json_encode($this->swagger, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+        $this->logger->debug('Generate swagger.json success!');
     }
 }

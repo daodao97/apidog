@@ -7,12 +7,12 @@ use Hyperf\Apidog\Annotation\FormData;
 use Hyperf\Apidog\Annotation\Header;
 use Hyperf\Apidog\Annotation\Query;
 use Hyperf\Apidog\ApiAnnotation;
-use Hyperf\Di\Annotation\Inject;
+use Hyperf\Apidog\Validation\Validation;
+use Hyperf\Contract\ConfigInterface;
 use Hyperf\HttpMessage\Stream\SwooleStream;
 use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\HttpServer\Contract\ResponseInterface as HttpResponse;
 use Hyperf\HttpServer\CoreMiddleware;
-use Hyperf\HttpServer\Router\Handler;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -31,22 +31,18 @@ class ApiValidationMiddleware extends CoreMiddleware
      * @var HttpResponse
      */
     protected $response;
-    /**
-     * @var LoggerFactory
-     */
-    protected $log;
-    /**
-     * @Inject()
-     * @var \Hyperf\Apidog\Validation\ValidationInterface
-     */
+
+    protected $logger;
+
     protected $validation;
 
-    public function __construct(ContainerInterface $container, HttpResponse $response, RequestInterface $request, LoggerFactory $logger)
+    public function __construct(ContainerInterface $container, HttpResponse $response, RequestInterface $request, LoggerFactory $logger, Validation $validation)
     {
         $this->container = $container;
         $this->response = $response;
         $this->request = $request;
-        $this->log = $logger->get('validation');
+        $this->logger = $logger->get('validation');
+        $this->validation = $validation;
         parent::__construct($container, 'http');
     }
 
@@ -59,14 +55,7 @@ class ApiValidationMiddleware extends CoreMiddleware
             return $handler->handle($request);
         }
 
-        if ($routes[1] instanceof Handler) {
-            [$controller, $action] = [
-                $routes[1]->callback[0],
-                $routes[1]->callback[1]
-            ];
-        } else {
-            [$controller, $action] = $this->prepareHandler($routes[1]);
-        }
+        [$controller, $action] = $this->prepareHandler($routes[1]->callback);
 
         $controllerInstance = $this->container->get($controller);
         $annotations = ApiAnnotation::methodMetadata($controller, $action);
@@ -89,15 +78,21 @@ class ApiValidationMiddleware extends CoreMiddleware
             }
         }
 
+        if (!array_filter(compact('header_rules', 'query_rules', 'body_rules', 'form_data_rules'))) {
+            $handler->handle($request);
+        }
+
+        $error_code = $this->container->get(ConfigInterface::class)->get('swagger.error_code', -1);
+
         if ($header_rules) {
             $headers = $request->getHeaders();
             $headers = array_map(function($item) {
                 return $item[0];
             }, $headers);
             [$data, $error] = $this->check($header_rules, $headers, $controllerInstance);
-            if ($data === false) {
+            if ($data === null) {
                 return $this->response->json([
-                    'code' => -1,
+                    'code' => $error_code,
                     'message' => implode(PHP_EOL, $error)
                 ]);
             }
@@ -105,9 +100,9 @@ class ApiValidationMiddleware extends CoreMiddleware
 
         if ($query_rules) {
             [$data, $error] = $this->check($query_rules, $request->getQueryParams(), $controllerInstance);
-            if ($data === false) {
+            if ($data === null) {
                 return $this->response->json([
-                    'code' => -1,
+                    'code' => $error_code,
                     'message' => implode(PHP_EOL, $error)
                 ]);
             }
@@ -116,9 +111,9 @@ class ApiValidationMiddleware extends CoreMiddleware
 
         if ($body_rules) {
             [$data, $error] = $this->check($body_rules, (array)json_decode($request->getBody()->getContents(), true), $controllerInstance);
-            if ($data === false) {
+            if ($data === null) {
                 return $this->response->json([
-                    'code' => -1,
+                    'code' => $error_code,
                     'message' => implode(PHP_EOL, $error)
                 ]);
             }
@@ -127,22 +122,23 @@ class ApiValidationMiddleware extends CoreMiddleware
 
         if ($form_data_rules) {
             [$data, $error] = $this->check($form_data_rules, $request->getParsedBody(), $controllerInstance);
-            if ($data === false) {
+            if ($data === null) {
                 return $this->response->json([
-                    'code' => -1,
+                    'code' => $error_code,
                     'message' => implode(PHP_EOL, $error)
                 ]);
             }
             Context::set(ServerRequestInterface::class, $request->withParsedBody($data));
         }
-        Context::set('validator.data', $data);
+
+        isset($data) && Context::set('validator.data', $data);
         return $handler->handle($request);
     }
 
     public function check($rules, $data, $controllerInstance)
     {
-        $validated_data = $this->validation->check($rules, $data, $controllerInstance);
+        [$data, $error] = $this->validation->check($rules, $data, $controllerInstance);
 
-        return [$validated_data, $this->validation->getError()];
+        return [$data, $error];
     }
 }
