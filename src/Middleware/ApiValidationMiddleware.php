@@ -79,7 +79,7 @@ class ApiValidationMiddleware extends CoreMiddleware
         }
 
         if (!array_filter(compact('header_rules', 'query_rules', 'body_rules', 'form_data_rules'))) {
-            $handler->handle($request);
+            return $handler->handle($request);
         }
 
         $error_code = $this->container->get(ConfigInterface::class)->get('swagger.error_code', -1);
