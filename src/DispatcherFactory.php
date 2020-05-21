@@ -1,5 +1,5 @@
 <?php
-declare(strict_types = 1);
+declare(strict_types=1);
 namespace Hyperf\Apidog;
 
 use Hyperf\Apidog\Annotation\ApiController;
@@ -9,7 +9,6 @@ use Hyperf\HttpServer\Router\DispatcherFactory as HyperfDispatcherFactory;
 
 class DispatcherFactory extends HyperfDispatcherFactory
 {
-
     protected function handleController(string $className, Controller $annotation, array $methodMetadata, array $middlewares = []): void
     {
         if (! $methodMetadata) {

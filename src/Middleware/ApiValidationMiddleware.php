@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Hyperf\Apidog\Middleware;
 
 use FastRoute\Dispatcher;
@@ -22,7 +23,6 @@ use Hyperf\Utils\Context;
 
 class ApiValidationMiddleware extends CoreMiddleware
 {
-
     /**
      * @var RequestInterface
      */
@@ -51,7 +51,6 @@ class ApiValidationMiddleware extends CoreMiddleware
         $uri = $request->getUri();
         $routes = $this->dispatcher->dispatch($request->getMethod(), $uri->getPath());
         if ($routes[0] !== Dispatcher::FOUND) {
-
             return $handler->handle($request);
         }
 
@@ -82,18 +81,20 @@ class ApiValidationMiddleware extends CoreMiddleware
             return $handler->handle($request);
         }
 
-        $error_code = $this->container->get(ConfigInterface::class)->get('swagger.error_code', -1);
+        $error_code = $this->container->get(ConfigInterface::class)->get('apidoc.error_code', -1);
+        $field_error_code = $this->container->get(ConfigInterface::class)->get('apidoc.field_error_code', 'code');
+        $field_error_message = $this->container->get(ConfigInterface::class)->get('apidoc.field_error_message', 'message');
 
         if ($header_rules) {
             $headers = $request->getHeaders();
-            $headers = array_map(function($item) {
+            $headers = array_map(function ($item) {
                 return $item[0];
             }, $headers);
             [$data, $error] = $this->check($header_rules, $headers, $controllerInstance);
             if ($data === null) {
                 return $this->response->json([
-                    'code' => $error_code,
-                    'message' => implode(PHP_EOL, $error)
+                    $field_error_code => $error_code,
+                    $field_error_message => implode(PHP_EOL, $error)
                 ]);
             }
         }
@@ -102,8 +103,8 @@ class ApiValidationMiddleware extends CoreMiddleware
             [$data, $error] = $this->check($query_rules, $request->getQueryParams(), $controllerInstance);
             if ($data === null) {
                 return $this->response->json([
-                    'code' => $error_code,
-                    'message' => implode(PHP_EOL, $error)
+                    $field_error_code => $error_code,
+                    $field_error_message => implode(PHP_EOL, $error)
                 ]);
             }
             Context::set(ServerRequestInterface::class, $request->withQueryParams($data));
@@ -113,8 +114,8 @@ class ApiValidationMiddleware extends CoreMiddleware
             [$data, $error] = $this->check($body_rules, (array)json_decode($request->getBody()->getContents(), true), $controllerInstance);
             if ($data === null) {
                 return $this->response->json([
-                    'code' => $error_code,
-                    'message' => implode(PHP_EOL, $error)
+                    $field_error_code => $error_code,
+                    $field_error_message => implode(PHP_EOL, $error)
                 ]);
             }
             Context::set(ServerRequestInterface::class, $request->withBody(new SwooleStream(json_encode($data))));
@@ -124,8 +125,8 @@ class ApiValidationMiddleware extends CoreMiddleware
             [$data, $error] = $this->check($form_data_rules, $request->getParsedBody(), $controllerInstance);
             if ($data === null) {
                 return $this->response->json([
-                    'code' => $error_code,
-                    'message' => implode(PHP_EOL, $error)
+                    $field_error_code => $error_code,
+                    $field_error_message => implode(PHP_EOL, $error)
                 ]);
             }
             Context::set(ServerRequestInterface::class, $request->withParsedBody($data));

@@ -1,5 +1,5 @@
 <?php
-declare(strict_types = 1);
+declare(strict_types=1);
 namespace Hyperf\Apidog\Annotation;
 
 use Hyperf\Di\Annotation\AbstractAnnotation;
@@ -30,7 +30,6 @@ class Body extends Param
 
     public function setRequire()
     {
-
         $this->required = strpos(json_encode($this->rules), 'required') !== false;
         return $this;
     }

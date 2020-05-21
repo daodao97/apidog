@@ -6,7 +6,7 @@ return [
     // swagger 配置的输出文件
     'output_file' => BASE_PATH . '/public/swagger/swagger.json',
     // 忽略的hook, 非必须 用于忽略符合条件的接口, 将不会输出到上定义的文件中
-    'ignore' => function($controller, $action) {
+    'ignore' => function ($controller, $action) {
         return false;
     },
     // swagger 的基础配置

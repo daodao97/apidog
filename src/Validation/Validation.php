@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Hyperf\Apidog\Validation;
 
 use Hyperf\Utils\ApplicationContext;

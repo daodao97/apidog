@@ -1,5 +1,5 @@
 <?php
-declare(strict_types = 1);
+declare(strict_types=1);
 namespace Hyperf\Apidog\Annotation;
 
 use Hyperf\HttpServer\Annotation\Controller;
@@ -10,7 +10,6 @@ use Hyperf\HttpServer\Annotation\Controller;
  */
 class ApiController extends Controller
 {
-
     public $tag;
     /**
      * @var null|string
