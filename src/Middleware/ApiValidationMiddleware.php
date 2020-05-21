@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+
 namespace Hyperf\Apidog\Middleware;
 
 use FastRoute\Dispatcher;
@@ -82,6 +83,7 @@ class ApiValidationMiddleware extends CoreMiddleware
         }
 
         $error_code = $this->container->get(ConfigInterface::class)->get('apidoc.error_code', -1);
+        $http_status_code = $this->container->get(ConfigInterface::class)->get('apidoc.http_status_code', 200);
         $field_error_code = $this->container->get(ConfigInterface::class)->get('apidoc.field_error_code', 'code');
         $field_error_message = $this->container->get(ConfigInterface::class)->get('apidoc.field_error_message', 'message');
 
@@ -92,20 +94,20 @@ class ApiValidationMiddleware extends CoreMiddleware
             }, $headers);
             [$data, $error] = $this->check($header_rules, $headers, $controllerInstance);
             if ($data === null) {
-                return $this->response->json([
+                return $this->response->raw(json_encode([
                     $field_error_code => $error_code,
                     $field_error_message => implode(PHP_EOL, $error)
-                ]);
+                ], JSON_UNESCAPED_UNICODE))->withStatus($http_status_code);
             }
         }
 
         if ($query_rules) {
             [$data, $error] = $this->check($query_rules, $request->getQueryParams(), $controllerInstance);
             if ($data === null) {
-                return $this->response->json([
+                return $this->response->raw(json_encode([
                     $field_error_code => $error_code,
                     $field_error_message => implode(PHP_EOL, $error)
-                ]);
+                ], JSON_UNESCAPED_UNICODE))->withStatus($http_status_code);
             }
             Context::set(ServerRequestInterface::class, $request->withQueryParams($data));
         }
@@ -113,10 +115,10 @@ class ApiValidationMiddleware extends CoreMiddleware
         if ($body_rules) {
             [$data, $error] = $this->check($body_rules, (array)json_decode($request->getBody()->getContents(), true), $controllerInstance);
             if ($data === null) {
-                return $this->response->json([
+                return $this->response->raw(json_encode([
                     $field_error_code => $error_code,
                     $field_error_message => implode(PHP_EOL, $error)
-                ]);
+                ], JSON_UNESCAPED_UNICODE))->withStatus($http_status_code);
             }
             Context::set(ServerRequestInterface::class, $request->withBody(new SwooleStream(json_encode($data))));
         }
@@ -124,10 +126,10 @@ class ApiValidationMiddleware extends CoreMiddleware
         if ($form_data_rules) {
             [$data, $error] = $this->check($form_data_rules, $request->getParsedBody(), $controllerInstance);
             if ($data === null) {
-                return $this->response->json([
+                return $this->response->raw(json_encode([
                     $field_error_code => $error_code,
                     $field_error_message => implode(PHP_EOL, $error)
-                ]);
+                ], JSON_UNESCAPED_UNICODE))->withStatus($http_status_code);
             }
             Context::set(ServerRequestInterface::class, $request->withParsedBody($data));
         }
@@ -139,7 +141,6 @@ class ApiValidationMiddleware extends CoreMiddleware
     public function check($rules, $data, $controllerInstance)
     {
         [$data, $error] = $this->validation->check($rules, $data, $controllerInstance);
-
         return [$data, $error];
     }
 }
