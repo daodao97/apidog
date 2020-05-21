@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Hyperf\Apidog;
 
 use Doctrine\Common\Annotations\AnnotationReader;

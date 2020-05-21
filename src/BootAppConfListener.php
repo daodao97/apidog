@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Hyperf\Apidog;
 
 use Hyperf\Apidog\Swagger\SwaggerJson;
@@ -37,7 +38,9 @@ class BootAppConfListener implements ListenerInterface
         $data = $router->getData();
         $swagger = new SwaggerJson();
 
-        $ignore = $config->get('apidog.ignore', function ($controller, $action) { return false;});
+        $ignore = $config->get('apidog.ignore', function ($controller, $action) {
+            return false;
+        });
 
         array_walk_recursive($data, function ($item) use ($swagger, $ignore) {
             if ($item instanceof Handler) {

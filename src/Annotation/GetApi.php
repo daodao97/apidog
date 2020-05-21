@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Hyperf\Apidog\Annotation;
 
 use Hyperf\HttpServer\Annotation\Mapping;
@@ -9,7 +10,6 @@ use Hyperf\HttpServer\Annotation\Mapping;
  */
 class GetApi extends Mapping
 {
-
     public $path;
     public $summary;
     public $description;

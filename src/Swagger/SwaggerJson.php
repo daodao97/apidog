@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Hyperf\Apidog\Swagger;
 
 use Hyperf\Apidog\Annotation\ApiResponse;
@@ -12,7 +13,6 @@ use Hyperf\Utils\ApplicationContext;
 
 class SwaggerJson
 {
-
     public $config;
 
     public $swagger;
@@ -78,7 +78,6 @@ class SwaggerJson
             'responses' => $this->makeResponses($responses, $path, $method),
             'description' => $mapping->description,
         ];
-
     }
 
     public function initModel()
@@ -120,10 +119,10 @@ class SwaggerJson
                 $type = 'string';
             }
             if ($type == 'array') {
-                $property['$ref'] = '#/definitions/ModelArray';;
+                $property['$ref'] = '#/definitions/ModelArray';
             }
             if ($type == 'object') {
-                $property['$ref'] = '#/definitions/ModelObject';;
+                $property['$ref'] = '#/definitions/ModelObject';
             }
             $property['type'] = $type;
             $property['description'] = $fieldNameLabel[1] ?? '';
@@ -187,7 +186,7 @@ class SwaggerJson
                 'description' => $item->description,
             ];
             if ($item->schema) {
-                $modelName = implode('', array_map('ucfirst', explode('/', $path))) . ucfirst($method) .'Response' . $item->code;
+                $modelName = implode('', array_map('ucfirst', explode('/', $path))) . ucfirst($method) . 'Response' . $item->code;
                 $ret = $this->responseSchemaToDefinition($item->schema, $modelName);
                 if ($ret) {
                     $resp[$item->code]['schema']['$ref'] = '#/definitions/' . $modelName;
