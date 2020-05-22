@@ -82,10 +82,11 @@ class ApiValidationMiddleware extends CoreMiddleware
             return $handler->handle($request);
         }
 
-        $error_code = $this->container->get(ConfigInterface::class)->get('apidoc.error_code', -1);
-        $http_status_code = $this->container->get(ConfigInterface::class)->get('apidoc.http_status_code', 200);
-        $field_error_code = $this->container->get(ConfigInterface::class)->get('apidoc.field_error_code', 'code');
-        $field_error_message = $this->container->get(ConfigInterface::class)->get('apidoc.field_error_message', 'message');
+        $config = $this->container->get(ConfigInterface::class);
+        $error_code = $config->get('apidog.error_code', -1);
+        $http_status_code = $config->get('apidog.http_status_code', 200);
+        $field_error_code = $config->get('apidog.field_error_code', 'code');
+        $field_error_message = $config->get('apidog.field_error_message', 'message');
 
         if ($header_rules) {
             $headers = $request->getHeaders();

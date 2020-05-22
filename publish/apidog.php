@@ -9,6 +9,11 @@ return [
     'ignore' => function ($controller, $action) {
         return false;
     },
+    // 自定义验证器错误码、错误描述字段
+    'error_code' => 400,
+    'http_status_code' => 400,
+    'field_error_code' => 'err_code',
+    'field_error_msg' => 'err_msg',
     // swagger 的基础配置
     'swagger' => [
         'swagger' => '2.0',

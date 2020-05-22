@@ -154,7 +154,7 @@ class SwaggerJson
         $parameters = [];
         /** @var \Hyperf\Apidog\Annotation\Query $item */
         foreach ($params as $item) {
-            if (in_array('array', explode('|', $item->rule))) {
+            if ($item->rule !== null && in_array('array', explode('|', $item->rule))) {
                 $item->name .= '[]';
             }
             $parameters[$item->name] = [
