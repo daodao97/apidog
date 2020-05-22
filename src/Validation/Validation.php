@@ -95,15 +95,21 @@ class Validation
             $errors = $validator->errors()->all();
             foreach ($errors as &$item) {
                 $filed_keys = array_keys($map);
-                rsort($filed_keys);
-                krsort($map);
+                $filed_keys = array_sort_by_value_length($filed_keys);
+                $replace = [];
+                foreach ($filed_keys as $k) {
+                    $replace[] = $map[$k];
+                }
+                $map = array_sort_by_key_length($map);
                 $filed_keys = array_map(function ($key) {
                     if (strpos($key, '.') === false) {
                         return str_replace('_', ' ', $key);
                     }
                     return $key;
                 }, $filed_keys);
-                $item = str_replace($filed_keys, array_values($map), $item);
+
+                $item = str_replace($filed_keys, $replace, $item);
+                $item = str_replace('字段', '', $item);
                 unset($item);
             }
 
