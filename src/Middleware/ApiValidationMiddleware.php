@@ -59,6 +59,10 @@ class ApiValidationMiddleware extends CoreMiddleware
             return $handler->handle($request);
         }
 
+        if ($routes[1]->callback instanceof \Closure) {
+            return $handler->handle($request);
+        }
+
         if ($routes[1] instanceof Handler) {
             [$controller, $action] = [
                 $routes[1]->callback[0],
