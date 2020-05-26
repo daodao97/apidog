@@ -54,6 +54,11 @@ class ApiValidationMiddleware extends CoreMiddleware
         if ($routes[0] !== Dispatcher::FOUND) {
             return $handler->handle($request);
         }
+        
+        // do not check Closure
+        if ($routes[1]->callback instanceof \Closure) {
+            return $handler->handle($request);
+        }
 
         [$controller, $action] = $this->prepareHandler($routes[1]->callback);
 
