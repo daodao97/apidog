@@ -53,7 +53,7 @@ return [
     'error_code' => 400,
     'http_status_code' => 400,
     'field_error_code' => 'err_code',
-    'field_error_msg' => 'err_msg',
+    'field_error_message' => 'err_msg',
     // swagger 的基础配置
     'swagger' => [
         'swagger' => '2.0',
