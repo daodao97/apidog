@@ -4,6 +4,7 @@ namespace Hyperf\Apidog\Swagger;
 
 use Hyperf\Apidog\Annotation\ApiResponse;
 use Hyperf\Apidog\Annotation\Body;
+use Hyperf\Apidog\Annotation\FormData;
 use Hyperf\Apidog\Annotation\Param;
 use Hyperf\Apidog\ApiAnnotation;
 use Hyperf\Contract\ConfigInterface;
@@ -38,6 +39,7 @@ class SwaggerJson
         $responses = [];
         /** @var \Hyperf\Apidog\Annotation\GetApi $mapping */
         $mapping = null;
+        $consumes = null;
         foreach ($methodAnnotations as $option) {
             if ($option instanceof Mapping) {
                 $mapping = $option;
@@ -47,6 +49,12 @@ class SwaggerJson
             }
             if ($option instanceof ApiResponse) {
                 $responses[] = $option;
+            }
+            if ($option instanceof FormData) {
+                $consumes = 'application/x-www-form-urlencoded';
+            }
+            if ($option instanceof Body) {
+                $consumes = 'application/json';
             }
         }
         $tag = $classAnnotation->tag ?: $className;
@@ -68,6 +76,7 @@ class SwaggerJson
                 $tag,
             ],
             'summary' => $mapping->summary,
+            'operationId' => implode('', array_map('ucfirst', explode('/', $path))) . $mapping->methods[0],
             'parameters' => $this->makeParameters($params, $path),
             'consumes' => [
                 "application/json",
@@ -78,6 +87,9 @@ class SwaggerJson
             'responses' => $this->makeResponses($responses, $path, $method),
             'description' => $mapping->description,
         ];
+        if ($consumes !== null) {
+            $this->swagger['paths'][$path][$method]['consumes'] = $consumes;
+        }
     }
 
     public function initModel()
