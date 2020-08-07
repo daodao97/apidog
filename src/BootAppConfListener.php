@@ -43,7 +43,7 @@ class BootAppConfListener implements ListenerInterface
         });
 
         array_walk_recursive($data, function ($item) use ($swagger, $ignore) {
-            if ($item instanceof Handler) {
+            if ($item instanceof Handler && !($item->callback instanceof \Closure)) {
                 [$controller, $action] = $this->prepareHandler($item->callback);
                 (!$ignore($controller, $action)) && $swagger->addPath($controller, $action);
             }
