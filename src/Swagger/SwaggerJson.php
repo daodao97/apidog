@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace Hyperf\Apidog\Swagger;
 
+use Doctrine\Common\Annotations\AnnotationReader;
 use Hyperf\Apidog\Annotation\ApiResponse;
 use Hyperf\Apidog\Annotation\Body;
 use Hyperf\Apidog\Annotation\FormData;
@@ -30,6 +31,10 @@ class SwaggerJson
 
     public function addPath($className, $methodName)
     {
+        $ignores = $this->config->get('annotations.scan.ignore_annotations', []);
+        foreach ($ignores as $ignore) {
+            AnnotationReader::addGlobalIgnoredName($ignore);
+        }
         $classAnnotation = ApiAnnotation::classMetadata($className);
         $methodAnnotations = ApiAnnotation::methodMetadata($className, $methodName);
         if (!$classAnnotation || !$methodAnnotations) {

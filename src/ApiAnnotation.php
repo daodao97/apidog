@@ -13,8 +13,8 @@ class ApiAnnotation
     {
         $reflectMethod = ReflectionManager::reflectMethod($className, $methodName);
         $reader = new AnnotationReader();
-        $methodAnnotations = $reader->getMethodAnnotations($reflectMethod);
-        return $methodAnnotations;
+
+        return $reader->getMethodAnnotations($reflectMethod);
     }
 
     public static function classMetadata($className)
