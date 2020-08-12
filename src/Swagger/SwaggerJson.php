@@ -13,6 +13,7 @@ use Hyperf\Contract\ConfigInterface;
 use Hyperf\HttpServer\Annotation\Mapping;
 use Hyperf\Logger\LoggerFactory;
 use Hyperf\Utils\ApplicationContext;
+use Hyperf\Utils\Arr;
 
 class SwaggerJson
 {
@@ -101,14 +102,14 @@ class SwaggerJson
             'type' => 'array',
             'required' => [],
             'items' => [
-                'type' => 'string'
+                'type' => 'string',
             ],
         ];
         $objectSchema = [
             'type' => 'object',
             'required' => [],
             'items' => [
-                'type' => 'string'
+                'type' => 'string',
             ],
         ];
 
@@ -116,7 +117,7 @@ class SwaggerJson
         $this->swagger['definitions']['ModelObject'] = $objectSchema;
     }
 
-    public function rules2schema($rules)
+    public function rules2schema($name, $rules)
     {
         $schema = [
             'type' => 'object',
@@ -129,21 +130,31 @@ class SwaggerJson
             $fieldName = $fieldNameLabel[0];
             if (!is_array($rule)) {
                 $type = $this->getTypeByRule($rule);
+                $property['type'] = $type;
+                if ($type == 'array') {
+                    $property['$ref'] = '#/definitions/ModelArray';
+                }
+                if ($type == 'object') {
+                    $property['$ref'] = '#/definitions/ModelObject';
+                }
             } else {
-                //TODO 结构体多层
-                $type = 'string';
-            }
-            if ($type == 'array') {
-                $property['$ref'] = '#/definitions/ModelArray';
-            }
-            if ($type == 'object') {
-                $property['$ref'] = '#/definitions/ModelObject';
+                $deepModelName = $name . ucfirst($fieldName);
+                if (Arr::isAssoc($rule)) {
+                    $type = 'object';
+                    $this->rules2schema($deepModelName, $rule);
+                    $property['$ref'] = '#/definitions/' . $deepModelName;
+                } else {
+                    $type = 'array';
+                    $this->rules2schema($deepModelName, $rule[0]);
+                    $property['items']['$ref'] = '#/definitions/' . $deepModelName;
+                }
             }
             $property['type'] = $type;
             $property['description'] = $fieldNameLabel[1] ?? '';
             $schema['properties'][$fieldName] = $property;
         }
 
+        $this->swagger['definitions'][$name] = $schema;
         return $schema;
     }
 
@@ -158,6 +169,9 @@ class SwaggerJson
         }
         if (array_intersect($default, ['object'])) {
             return 'object';
+        }
+        if (array_intersect($default, ['file'])) {
+            return 'file';
         }
         return 'string';
     }
@@ -180,12 +194,12 @@ class SwaggerJson
             ];
             if ($item instanceof Body) {
                 $modelName = implode('', array_map('ucfirst', explode('/', $path)));
-                $schema = $this->rules2schema($item->rules);
-                $this->swagger['definitions'][$modelName] = $schema;
+                $this->rules2schema($modelName, $item->rules);
                 $parameters[$item->name]['schema']['$ref'] = '#/definitions/' . $modelName;
             } else {
-                $parameters[$item->name]['type'] = $item->type;
-                $parameters[$item->name]['default'] = $item->default ?? '';
+                $type = $this->getTypeByRule($item->rule);
+                $parameters[$item->name]['type'] = $type;
+                $parameters[$item->name]['default'] = $item->default;
             }
         }
 

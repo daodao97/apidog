@@ -11,20 +11,24 @@ use Hyperf\Validation\ValidatorFactory;
 
 class Validation
 {
-    use ValidationCustomRule;
+    public $container;
 
     /** @var ValidatorFactory */
     public $factory;
 
+    public $customValidateRules;
+
     public function __construct()
     {
-        $this->factory = make(ValidatorFactory::class);
+        $this->container = ApplicationContext::getContainer();
+        $this->factory = $this->container->get(ValidatorFactory::class);
+        $this->customValidateRules = $this->container->get(ValidationCustomRule::class);
     }
 
     public function check($rules, $data, $obj = null)
     {
         foreach ($data as $key => $val) {
-            if (strpos($key, '.') !== false) {
+            if (strpos((string)$key, '.') !== false) {
                 Arr::set($data, $key, $val);
                 unset($data[$key]);
             }
@@ -41,52 +45,58 @@ class Validation
                 continue;
             }
             $title = $field_extra[1] ?? $field_extra[0];
-            $rules = is_array($rule) ? $rule : explode('|', $rule);
-            foreach ($rules as $index => &$item) {
-                if ($index === 'children') {
-                    $request_sub_data = Arr::get($data, $field);
-                    if ($item['repeat']) {
-                        foreach ($request_sub_data as $part_index => $part) {
-                            [
-                                $sub_data,
-                                $sub_error,
-                            ] = $this->check($item['rules'], $part);
-                            if ($sub_error) {
-                                $sub_error[0] = $title . '的第' . ($part_index + 1) . '项 ' . $sub_error[0];
 
-                                return [$sub_data, $sub_error];
-                            }
-                        }
-                    } else {
-                        [
-                            $sub_data,
-                            $sub_error,
-                        ] = $this->check($item, $request_sub_data);
-                        if ($sub_error) {
-                            $sub_error[0] = $title . '中的 ' . $sub_error[0];
+            if (is_array($rule)) {
+                $has_required = Str::contains('required', json_encode($rule, JSON_UNESCAPED_UNICODE));
+                $sub_data = Arr::get($data, $field, []);
+                if ($has_required && !$sub_data) {
+                    return [null, [$title . '的子项是必须的']];
+                }
 
-                            return [$sub_data, $sub_error];
+                // rule : {"field|字段":"required|***"}
+                if (Arr::isAssoc($rule)) {
+                    $result = $this->check($rule, $sub_data, $obj);
+                    $result[1] = array_map(function ($item) use ($title) {
+                        return sprintf('%s中的%s', $title, $item);
+                    }, $result[1]);
+                    if ($result[1]) {
+                        return $result;
+                    }
+                    continue;
+                } else { // rule : {{"field|字段":"required|***"}}
+                    foreach ($sub_data as $index => $part) {
+                        $result = $this->check($rule[$index] ?? $rule[0], $part, $obj);
+                        $result[1] = array_map(function ($item) use ($title, $index) {
+                            return sprintf('%s中第%s项的%s', $title, $index + 1, $item);
+                        }, $result[1]);
+                        if ($result[1]) {
+                            return $result;
                         }
                     }
                     continue;
                 }
+            }
+            $_rules = explode('|', $rule);
+            foreach ($_rules as $index => &$item) {
                 if ($item == 'json') {
                     $item = 'array';
                 }
                 if (method_exists($this, $item)) {
-                    $item = $this->makeCustomRule($item);
+                    $item = $this->makeCustomRule($item, $this);
+                } elseif (method_exists($this->customValidateRules, $item)) {
+                    $item = $this->makeCustomRule($item, $this->customValidateRules);
                 } elseif (is_string($item) && Str::startsWith($item, 'cb_')) {
                     $item = $this->makeObjectCallback(Str::replaceFirst('cb_', '', $item), $obj);
                 }
                 unset($item);
             }
-            $real_rules[$field] = $rules;
+            $real_rules[$field] = $_rules;
             $map[$field] = $title;
         }
 
         $validator = $this->factory->make($data, $real_rules);
 
-        $verifier =  ApplicationContext::getContainer()->get(PresenceVerifierInterface::class);
+        $verifier = $this->container->get(PresenceVerifierInterface::class);
         $validator->setPresenceVerifier($verifier);
 
         $fails = $validator->fails();
@@ -136,10 +146,9 @@ class Validation
         ];
     }
 
-    public function makeCustomRule($custom_rule)
+    public function makeCustomRule($custom_rule, $object)
     {
-        return new class ($custom_rule, $this) implements Rule
-        {
+        return new class ($custom_rule, $object) implements Rule{
             public $custom_rule;
 
             public $validation;
@@ -189,8 +198,7 @@ class Validation
 
     public function makeObjectCallback($method, $object)
     {
-        return new class ($method, $this, $object) implements Rule
-        {
+        return new class ($method, $this, $object) implements Rule{
             public $custom_rule;
 
             public $validation;

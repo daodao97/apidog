@@ -12,8 +12,8 @@ return [
     // 自定义验证器错误码、错误描述字段
     'error_code' => 400,
     'http_status_code' => 400,
-    'field_error_code' => 'err_code',
-    'field_error_message' => 'err_msg',
+    'field_error_code' => 'code',
+    'field_error_message' => 'message',
     // swagger 的基础配置
     'swagger' => [
         'swagger' => '2.0',
@@ -22,7 +22,7 @@ return [
             'version' => '1.0.0',
             'title' => 'HYPERF API DOC',
         ],
-        'host' => 'hyperf.io',
+        'host' => 'apidog.cc',
         'schemes' => ['http'],
     ],
 ];

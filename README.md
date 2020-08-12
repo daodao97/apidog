@@ -107,7 +107,7 @@ swagger文档生成: 在`php bin/hyperf.php start` 启动 `http-server` 时, 通
 
 ```php
 <?php
-declare(strict_types = 1);
+declare(strict_types=1);
 namespace App\Controller;
 
 use Hyperf\Apidog\Annotation\ApiController;
@@ -119,6 +119,8 @@ use Hyperf\Apidog\Annotation\GetApi;
 use Hyperf\Apidog\Annotation\Header;
 use Hyperf\Apidog\Annotation\PostApi;
 use Hyperf\Apidog\Annotation\Query;
+use Hyperf\HttpServer\Contract\RequestInterface;
+use Hyperf\Utils\ApplicationContext;
 
 /**
  * @ApiController(tag="用户管理", description="用户的新增/修改/删除接口")
@@ -126,10 +128,12 @@ use Hyperf\Apidog\Annotation\Query;
 class UserController extends AbstractController
 {
     /**
+     * @Author 刀刀
      * @PostApi(path="/user", description="添加一个用户")
      * @Header(key="token|接口访问凭证", rule="required")
      * @FormData(key="name|名称", rule="required|max:10|cb_checkName")
      * @FormData(key="sex|年龄", rule="integer|in:0,1")
+     * @FormData(key="file|文件", rule="file")
      * @ApiResponse(code="-1", description="参数错误")
      * @ApiResponse(code="0", description="创建成功", schema={"id":1})
      */
@@ -147,6 +151,7 @@ class UserController extends AbstractController
         if (in_black_list($value)) {
             return "拒绝添加 " . $value;
         }
+
         return true;
     }
 
@@ -154,16 +159,25 @@ class UserController extends AbstractController
      * 请注意 body 类型 rules 为数组类型
      * @DeleteApi(path="/user", description="删除用户")
      * @Body(rules={
-     *     "id|用户id":"required|integer|max:0"
+     *     "id|用户id":"required|integer|max:10",
+     *     "deepAssoc|深层关联":{
+     *        "name_1|名称": "required|integer|max:20"
+     *     },
+     *     "deepUassoc|深层索引":{{
+     *         "name_2|名称": "required|integer|max:20"
+     *     }}
      * })
      * @ApiResponse(code="-1", description="参数错误")
      * @ApiResponse(code="0", description="删除成功", schema={"id":1})
      */
     public function delete()
     {
+        $request = ApplicationContext::getContainer()->get(RequestInterface::class);
+        $body = $request->getBody()->getContents();
         return [
             'code' => 0,
-            'id' => 1,
+            'query' => $request->getQueryParams(),
+            'body' => json_decode($body, true),
         ];
     }
 
@@ -185,6 +199,23 @@ class UserController extends AbstractController
 }
 ```
 
+## Swagger UI启动
+
+组件提供了一个快捷命令, 用来快速启动一个 `swagger ui`.
+
+```bash
+php bin/hyperf.php apidog:ui
+```
+
+![DSRQnj](https://cdn.jsdelivr.net/gh/daodao97/FigureBed@master/uPic/DSRQnj.png)
+
 ## Swagger展示
 
 ![swagger](http://tva1.sinaimg.cn/large/007X8olVly1g6j91o6xroj31k10u079l.jpg)
+
+## 更新日志
+
+- 20200812
+    - `body` 结构增加多级支持
+    - `FormData` 增加 文件上传样例
+    - 增加`swagger ui`命令行工具

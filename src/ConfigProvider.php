@@ -7,7 +7,9 @@ class ConfigProvider
     public function __invoke(): array
     {
         return [
-            'commands' => [],
+            'commands' => [
+                UICommand::class
+            ],
             'dependencies' => [
                 \Hyperf\HttpServer\Router\DispatcherFactory::class => DispatcherFactory::class
             ],

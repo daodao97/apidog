@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Hyperf\Apidog\Validation;
 
-trait ValidationCustomRule
+class ValidationCustomRule
 {
     /**
      * @param mixed $attribute 属性
@@ -27,7 +27,7 @@ trait ValidationCustomRule
 
     public function class_exist($attribute, $value)
     {
-        if (!class_exists($value)) {
+        if (!class_exists((string)$value)) {
             return '类名不存在';
         }
         return true;
