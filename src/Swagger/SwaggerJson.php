@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+
 namespace Hyperf\Apidog\Swagger;
 
 use Doctrine\Common\Annotations\AnnotationReader;
@@ -80,20 +81,17 @@ class SwaggerJson
             'tags' => [
                 $tag,
             ],
-            'summary' => $mapping->summary,
+            'summary' => $mapping->summary ?? '',
             'operationId' => implode('', array_map('ucfirst', explode('/', $path))) . $mapping->methods[0],
             'parameters' => $this->makeParameters($params, $path),
-            'consumes' => [
-                "application/json",
-            ],
             'produces' => [
                 "application/json",
             ],
             'responses' => $this->makeResponses($responses, $path, $method),
-            'description' => $mapping->description,
+            'description' => $mapping->description ?? '',
         ];
         if ($consumes !== null) {
-            $this->swagger['paths'][$path][$method]['consumes'] = $consumes;
+            $this->swagger['paths'][$path][$method]['consumes'] = [$consumes];
         }
     }
 
@@ -179,14 +177,15 @@ class SwaggerJson
                 'name' => $item->name,
                 'description' => $item->description,
                 'required' => $item->required,
-                'type' => $item->type,
-                'default' => $item->default,
             ];
             if ($item instanceof Body) {
                 $modelName = implode('', array_map('ucfirst', explode('/', $path)));
                 $schema = $this->rules2schema($item->rules);
                 $this->swagger['definitions'][$modelName] = $schema;
                 $parameters[$item->name]['schema']['$ref'] = '#/definitions/' . $modelName;
+            } else {
+                $parameters[$item->name]['type'] = $item->type;
+                $parameters[$item->name]['default'] = $item->default ?? '';
             }
         }
 
