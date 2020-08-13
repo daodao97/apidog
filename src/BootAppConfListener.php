@@ -10,6 +10,7 @@ use Hyperf\HttpServer\Router\DispatcherFactory;
 use Hyperf\HttpServer\Router\Handler;
 use Hyperf\Logger\LoggerFactory;
 use Hyperf\Utils\ApplicationContext;
+use Hyperf\Utils\Str;
 
 class BootAppConfListener implements ListenerInterface
 {
@@ -29,27 +30,33 @@ class BootAppConfListener implements ListenerInterface
             $logger->debug('apidog not enable');
             return;
         }
-        $enable = $config->get('apidog.output_file');
-        if (!$enable) {
+        $output = $config->get('apidog.output_file');
+        if (!$output) {
             $logger->error('/config/autoload/apidog.php need set output_file');
             return;
         }
         $router = $container->get(DispatcherFactory::class)->getRouter('http');
         $data = $router->getData();
-        $swagger = new SwaggerJson();
+        $servers = $config->get('server.servers');
+        if (count($servers) > 1 && !Str::contains($output, '{server}')) {
+            $logger->warning('You have multiple serve, but your apidog.output_file not contains {server} var');
+        }
+        foreach ($servers as $server) {
+            $swagger = new SwaggerJson($server['name']);
 
-        $ignore = $config->get('apidog.ignore', function ($controller, $action) {
-            return false;
-        });
+            $ignore = $config->get('apidog.ignore', function ($controller, $action) {
+                return false;
+            });
 
-        array_walk_recursive($data, function ($item) use ($swagger, $ignore) {
-            if ($item instanceof Handler && !($item->callback instanceof \Closure)) {
-                [$controller, $action] = $this->prepareHandler($item->callback);
-                (!$ignore($controller, $action)) && $swagger->addPath($controller, $action);
-            }
-        });
+            array_walk_recursive($data, function ($item) use ($swagger, $ignore) {
+                if ($item instanceof Handler && !($item->callback instanceof \Closure)) {
+                    [$controller, $action] = $this->prepareHandler($item->callback);
+                    (!$ignore($controller, $action)) && $swagger->addPath($controller, $action);
+                }
+            });
 
-        $swagger->save();
+            $swagger->save();
+        }
     }
 
     protected function prepareHandler($handler): array

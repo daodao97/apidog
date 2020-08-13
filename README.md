@@ -52,8 +52,8 @@ return [
     // 自定义验证器错误码、错误描述字段
     'error_code' => 400,
     'http_status_code' => 400,
-    'field_error_code' => 'err_code',
-    'field_error_message' => 'err_msg',
+    'field_error_code' => 'code',
+    'field_error_message' => 'message',
     // swagger 的基础配置
     'swagger' => [
         'swagger' => '2.0',
@@ -99,7 +99,19 @@ swagger文档生成: 在`php bin/hyperf.php start` 启动 `http-server` 时, 通
 `Header`, `Quyer`, `Body`, `FormData`, `Path`
 
 ### 其他
-`ApiController`, `ApiResponse`
+`ApiController`, `ApiResponse`, `ApiVersion`, `ApiServer`
+
+```php
+/**
+ * @ApiVersion(version="v1")
+ * @ApiServer(name="http")
+ */
+class UserController {} 
+```
+
+`ApiServer` 当你在 `config/autoload.php/server.php servers` 中配置了多个 `http` 服务时, 如果想不同服务生成不同的`swagger.json` 可以在控制器中增加此注解.
+
+`ApiVersion` 当你的统一个接口存在不同版本时, 可以使用此注解, 路由注册时会为每个木有增加版本号, 如上方代码注册的实际路由为 `/v1/user/***`
 
 具体使用方式参见下方样例
 
@@ -112,6 +124,7 @@ namespace App\Controller;
 
 use Hyperf\Apidog\Annotation\ApiController;
 use Hyperf\Apidog\Annotation\ApiResponse;
+use Hyperf\Apidog\Annotation\ApiVersion;
 use Hyperf\Apidog\Annotation\Body;
 use Hyperf\Apidog\Annotation\DeleteApi;
 use Hyperf\Apidog\Annotation\FormData;
@@ -123,6 +136,7 @@ use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\Utils\ApplicationContext;
 
 /**
+ * @ApiVersion(version="v1")
  * @ApiController(tag="用户管理", description="用户的新增/修改/删除接口")
  */
 class UserController extends AbstractController
@@ -214,7 +228,9 @@ php bin/hyperf.php apidog:ui
 ![swagger](http://tva1.sinaimg.cn/large/007X8olVly1g6j91o6xroj31k10u079l.jpg)
 
 ## 更新日志
-
+- 20200813
+    - 增加Api版本控制, `ApiVersion`, 可以给路由增加版本前缀
+    - 增加多`Server`支持, `ApiServer`, 可以为按服务生成`swagger.json`
 - 20200812
     - `body` 结构增加多级支持
     - `FormData` 增加 文件上传样例

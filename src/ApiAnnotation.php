@@ -4,6 +4,7 @@ namespace Hyperf\Apidog;
 
 use Doctrine\Common\Annotations\AnnotationReader;
 use Hyperf\Apidog\Annotation\ApiController;
+use Hyperf\Apidog\Annotation\ApiServer;
 use Hyperf\Di\Annotation\AnnotationCollector;
 use Hyperf\Di\ReflectionManager;
 
@@ -17,8 +18,7 @@ class ApiAnnotation
         return $reader->getMethodAnnotations($reflectMethod);
     }
 
-    public static function classMetadata($className)
-    {
-        return AnnotationCollector::getClassAnnotation($className, ApiController::class);
+    public static function classMetadata($className) {
+        return AnnotationCollector::list()[$className]['_c'] ?? [];
     }
 }

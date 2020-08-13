@@ -4,7 +4,10 @@ declare(strict_types=1);
 namespace Hyperf\Apidog\Swagger;
 
 use Doctrine\Common\Annotations\AnnotationReader;
+use Hyperf\Apidog\Annotation\ApiController;
 use Hyperf\Apidog\Annotation\ApiResponse;
+use Hyperf\Apidog\Annotation\ApiServer;
+use Hyperf\Apidog\Annotation\ApiVersion;
 use Hyperf\Apidog\Annotation\Body;
 use Hyperf\Apidog\Annotation\FormData;
 use Hyperf\Apidog\Annotation\Param;
@@ -23,12 +26,15 @@ class SwaggerJson
 
     public $logger;
 
-    public function __construct()
+    public $server;
+
+    public function __construct($server)
     {
         $container = ApplicationContext::getContainer();
         $this->config = $container->get(ConfigInterface::class);
         $this->logger = $container->get(LoggerFactory::class)->get('apidog');
         $this->swagger = $this->config->get('apidog.swagger');
+        $this->server = $server;
     }
 
     public function addPath($className, $methodName)
@@ -38,8 +44,22 @@ class SwaggerJson
             AnnotationReader::addGlobalIgnoredName($ignore);
         }
         $classAnnotation = ApiAnnotation::classMetadata($className);
+        $controlerAnno = $classAnnotation[ApiController::class] ?? null;
+        $serverAnno = $classAnnotation[ApiServer::class] ?? null;
+        $versionAnno = $classAnnotation[ApiVersion::class] ?? null;
+        $bindServer = $serverAnno ? $serverAnno->name : $this->config->get('server.servers.0.name');
+
+        $servers = $this->config->get('server.servers');
+        $servers_name = array_column($servers, 'name');
+        if (!in_array($bindServer, $servers_name)) {
+            throw new \Exception(sprintf('The bind ApiServer name [%s] not found, defined in %s!', $bindServer, $className));
+        }
+
+        if ($bindServer !== $this->server) {
+            return;
+        }
         $methodAnnotations = ApiAnnotation::methodMetadata($className, $methodName);
-        if (!$classAnnotation || !$methodAnnotations) {
+        if (!$controlerAnno || !$methodAnnotations) {
             return;
         }
         $params = [];
@@ -64,18 +84,21 @@ class SwaggerJson
                 $consumes = 'application/json';
             }
         }
-        $tag = $classAnnotation->tag ?: $className;
+        $tag = $controlerAnno->tag ?: $className;
         $this->swagger['tags'][$tag] = [
             'name' => $tag,
-            'description' => $classAnnotation->description,
+            'description' => $controlerAnno->description,
         ];
 
         $path = $mapping->path;
-        $prefix = $classAnnotation->prefix;
+        $prefix = $controlerAnno->prefix;
         if ($path === '') {
             $path = $prefix;
         } elseif ($path[0] !== '/') {
             $path = $prefix . '/' . $path;
+        }
+        if($versionAnno && $versionAnno->version) {
+            $path = '/' . $versionAnno->version . $path;
         }
         $method = strtolower($mapping->methods[0]);
         $this->swagger['paths'][$path][$method] = [
@@ -277,6 +300,7 @@ class SwaggerJson
             $this->logger->error('/config/autoload/apidog.php need set output_file');
             return;
         }
+        $outputFile = str_replace('{server}', $this->server, $outputFile);
         file_put_contents($outputFile, json_encode($this->swagger, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
         $this->logger->debug('Generate swagger.json success!');
     }
