@@ -113,6 +113,11 @@ class UserController {}
 
 `ApiVersion` 当你的统一个接口存在不同版本时, 可以使用此注解, 路由注册时会为每个木有增加版本号, 如上方代码注册的实际路由为 `/v1/user/***`
 
+`ApiResponse` 响应体的`schema`支持为key设置简介. 
+```php
+@ApiResponse(code="0", description="删除成功", schema={"id|这里是ID":1})
+```
+
 具体使用方式参见下方样例
 
 ## 样例
@@ -231,6 +236,7 @@ php bin/hyperf.php apidog:ui
 - 20200813
     - 增加Api版本控制, `ApiVersion`, 可以给路由增加版本前缀
     - 增加多`Server`支持, `ApiServer`, 可以为按服务生成`swagger.json`
+    - `ApiResponse shema` 支持字段简介
 - 20200812
     - `body` 结构增加多级支持
     - `FormData` 增加 文件上传样例
