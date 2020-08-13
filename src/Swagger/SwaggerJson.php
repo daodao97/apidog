@@ -82,7 +82,7 @@ class SwaggerJson
             'tags' => [
                 $tag,
             ],
-            'summary' => $mapping->summary ?? '',
+            'summary' => $mapping->summary ?? $mapping->description ?? '',
             'operationId' => implode('', array_map('ucfirst', explode('/', $path))) . $mapping->methods[0],
             'parameters' => $this->makeParameters($params, $path, $method),
             'produces' => [
