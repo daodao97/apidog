@@ -257,7 +257,9 @@ class SwaggerJson
             return false;
         }
         $definition = [];
-        foreach ($schema as $key => $val) {
+        foreach ($schema as $keyString => $val) {
+            $keyArray =  explode('|',$keyString);
+            $key = $keyArray[0];
             $_key = str_replace('_', '', $key);
             $property = [];
             $property['type'] = gettype($val);
@@ -283,6 +285,7 @@ class SwaggerJson
             } else {
                 $property['default'] = $val;
             }
+            $property['description'] = $keyArray[1] ?? '';
             $definition['properties'][$key] = $property;
         }
         if ($level === 0) {
