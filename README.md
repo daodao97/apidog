@@ -234,8 +234,8 @@ php bin/hyperf.php apidog:ui
 
 ## 更新日志
 - 20200813
-    - 增加Api版本控制, `ApiVersion`, 可以给路由增加版本前缀
-    - 增加多`Server`支持, `ApiServer`, 可以为按服务生成`swagger.json`
+    - 增加Api版本, `ApiVersion`, 可以给路由增加版本前缀
+    - 增加多服务支持, `ApiServer`, 可以按服务生成`swagger.json`
     - `ApiResponse shema` 支持字段简介
 - 20200812
     - `body` 结构增加多级支持
