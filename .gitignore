@@ -8,3 +8,4 @@ composer.lock
 
 # phpstorm project files
 .idea
+ui/default/swagger.json
