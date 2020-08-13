@@ -3,6 +3,8 @@ declare(strict_types=1);
 namespace Hyperf\Apidog;
 
 use Hyperf\Apidog\Annotation\ApiController;
+use Hyperf\Apidog\Annotation\ApiVersion;
+use Hyperf\Di\Annotation\AnnotationCollector;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\Mapping;
 use Hyperf\HttpServer\Router\DispatcherFactory as HyperfDispatcherFactory;
@@ -17,6 +19,8 @@ class DispatcherFactory extends HyperfDispatcherFactory
         $prefix = $this->getPrefix($className, $annotation->prefix);
         $router = $this->getRouter($annotation->server);
 
+        /** @var ApiVersion $version */
+        $version = AnnotationCollector::list()[$className]['_c'][ApiVersion::class] ?? null;
         foreach ($methodMetadata as $methodName => $values) {
             $methodMiddlewares = $middlewares;
             // Handle method level middlewares.
@@ -24,6 +28,7 @@ class DispatcherFactory extends HyperfDispatcherFactory
                 $methodMiddlewares = array_merge($methodMiddlewares, $this->handleMiddleware($values));
                 $methodMiddlewares = array_unique($methodMiddlewares);
             }
+
 
             foreach ($values as $mapping) {
                 if (!($mapping instanceof Mapping)) {
@@ -39,6 +44,9 @@ class DispatcherFactory extends HyperfDispatcherFactory
                     $path = $prefix;
                 } elseif ($path[0] !== '/') {
                     $path = $prefix . '/' . $path;
+                }
+                if ($version && $version->version) {
+                    $path = '/' . $version->version . $path;
                 }
 
                 $router->addRoute($mapping->methods, $path, [$className, $methodName], [
