@@ -84,7 +84,7 @@ class SwaggerJson
             ],
             'summary' => $mapping->summary ?? '',
             'operationId' => implode('', array_map('ucfirst', explode('/', $path))) . $mapping->methods[0],
-            'parameters' => $this->makeParameters($params, $path),
+            'parameters' => $this->makeParameters($params, $path, $method),
             'produces' => [
                 "application/json",
             ],
@@ -176,8 +176,9 @@ class SwaggerJson
         return 'string';
     }
 
-    public function makeParameters($params, $path)
+    public function makeParameters($params, $path, $method)
     {
+        $method = ucfirst($method);
         $this->initModel();
         $path = str_replace(['{', '}'], '', $path);
         $parameters = [];
@@ -193,7 +194,7 @@ class SwaggerJson
                 'required' => $item->required,
             ];
             if ($item instanceof Body) {
-                $modelName = implode('', array_map('ucfirst', explode('/', $path)));
+                $modelName = $method . implode('', array_map('ucfirst', explode('/', $path)));
                 $this->rules2schema($modelName, $item->rules);
                 $parameters[$item->name]['schema']['$ref'] = '#/definitions/' . $modelName;
             } else {

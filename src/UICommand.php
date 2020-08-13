@@ -36,11 +36,15 @@ class UICommand extends HyperfCommand
 
         $http->on("start", function ($server) use ($root, $swagger_file, $ui, $command, $host, $port) {
             $command->output->success('Apidog Swagger UI is started at http://127.0.0.1:9527');
-            system(sprintf("cp %s %s", $swagger_file, $root . '/' . $ui . '/swagger.json'));
+            $copy_json = sprintf("cp %s %s", $swagger_file, $root . '/' . $ui . '/swagger.json');
+            system($copy_json);
             $command->output->text('I will open it in browser after 1 seconds');
             \Swoole\Timer::after(1000, function () use ($host, $port) {
                 // TODO win下
                 system(sprintf('open http://%s:%s', $host, $port));
+            });
+            \Swoole\Timer::tick(1000, function () use ($copy_json) {
+                system($copy_json);
             });
         });
 
