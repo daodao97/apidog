@@ -5,6 +5,7 @@ namespace Hyperf\Apidog\Middleware;
 
 use FastRoute\Dispatcher;
 use Hyperf\Apidog\Validation\ValidationApi;
+use Hyperf\Config\Annotation\Value;
 use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\HttpServer\Contract\ResponseInterface as HttpResponse;
 use Hyperf\HttpServer\CoreMiddleware;
@@ -26,6 +27,11 @@ class ApiValidationMiddleware extends CoreMiddleware
     protected $response;
 
     protected $validationApi;
+
+    /**
+     * @Value("apidog.http_status_code")
+     */
+    private $httpStatusCode;
 
     public function __construct(ContainerInterface $container, HttpResponse $response, RequestInterface $request, ValidationApi $validation)
     {
@@ -53,7 +59,7 @@ class ApiValidationMiddleware extends CoreMiddleware
 
         $result = $this->validationApi->validated($controller, $action);
         if ($result !== true) {
-            return $this->response->json($result);
+            return $this->response->json($result)->withStatus($this->httpStatusCode);
         }
 
         return $handler->handle($request);
