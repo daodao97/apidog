@@ -1,16 +1,18 @@
 <?php
 declare(strict_types=1);
 
-function array_map_recursive(callable $func, array $data)
-{
-    $result = array();
-    foreach ($data as $key => $val) {
-        $result[$key] = is_array($val)
-            ? array_map_recursive($func, $val)
-            : call($func, [$val]);
-    }
+if (!function_exists('array_map_recursive')) {
+    function array_map_recursive(callable $func, array $data)
+    {
+        $result = array();
+        foreach ($data as $key => $val) {
+            $result[$key] = is_array($val)
+                ? array_map_recursive($func, $val)
+                : call($func, [$val]);
+        }
 
-    return $result;
+        return $result;
+    }
 }
 
 if (!function_exists('array_sort_by_value_length')) {
