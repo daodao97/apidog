@@ -5,6 +5,8 @@ namespace Hyperf\Apidog\Swagger;
 
 use Doctrine\Common\Annotations\AnnotationReader;
 use Hyperf\Apidog\Annotation\ApiController;
+use Hyperf\Apidog\Annotation\ApiDefinition;
+use Hyperf\Apidog\Annotation\ApiDefinitions;
 use Hyperf\Apidog\Annotation\ApiResponse;
 use Hyperf\Apidog\Annotation\ApiServer;
 use Hyperf\Apidog\Annotation\ApiVersion;
@@ -47,6 +49,8 @@ class SwaggerJson
         $controlerAnno = $classAnnotation[ApiController::class] ?? null;
         $serverAnno = $classAnnotation[ApiServer::class] ?? null;
         $versionAnno = $classAnnotation[ApiVersion::class] ?? null;
+        $definitionsAnno = $classAnnotation[ApiDefinitions::class] ?? null;
+        $definitionAnno = $classAnnotation[ApiDefinition::class] ?? null;
         $bindServer = $serverAnno ? $serverAnno->name : $this->config->get('server.servers.0.name');
 
         $servers = $this->config->get('server.servers');
@@ -84,6 +88,10 @@ class SwaggerJson
                 $consumes = 'application/json';
             }
         }
+
+        $this->makeDefinition($definitionsAnno);
+        $definitionAnno && $this->makeDefinition([$definitionAnno]);
+        
         $tag = $controlerAnno->tag ?: $className;
         $this->swagger['tags'][$tag] = [
             'name' => $tag,
@@ -240,6 +248,10 @@ class SwaggerJson
                 'description' => $item->description,
             ];
             if ($item->schema) {
+                if (isset($item->schema['$ref'])) {
+                    $resp[$item->code]['schema']['$ref'] = '#/definitions/' . $item->schema['$ref'];
+                    continue;
+                }
                 $modelName = implode('', array_map('ucfirst', explode('/', $path))) . ucfirst($method) . 'Response' . $item->code;
                 $ret = $this->responseSchemaToDefinition($item->schema, $modelName);
                 if ($ret) {
@@ -249,6 +261,53 @@ class SwaggerJson
         }
 
         return $resp;
+    }
+
+    public function makeDefinition($definitions)
+    {
+        if (!$definitions) {
+            return false;
+        }
+        if ($definitions instanceof ApiDefinitions) {
+            $definitions = $definitions->definitions;
+        }
+        foreach ($definitions as $definition) {
+            /** @var $definition ApiDefinition */
+            $defName = $definition->name;
+            $defProps = $definition->properties;
+            $formatedProps = [];
+
+            foreach ($defProps as $propKey => $prop) {
+                [$propName, $propAlias] = explode('|', $propKey);
+                $propVal = [];
+                $propAlias && $propVal['description'] = $propAlias;
+                if (is_array($prop)) {
+                    if (isset($prop['description']) && is_string($prop['description'])) {
+                        $propVal['description'] = $prop['description'];
+                    }
+
+                    if (isset($prop['type']) && is_string($prop['type'])) {
+                        $propVal['type'] = $prop['type'];
+                    }
+
+                    if (isset($prop['default'])) {
+                        $propVal['defalut'] = $prop['default'];
+                        !isset($propVal['type']) && $propVal['type'] = is_numeric($default) ? 'integer': 'string';
+                    }
+
+                    if (isset($prop['$ref'])) {
+                        $propVal['type'] = 'object';
+                        $propVal['$ref'] = '#/definitions/' . $prop['$ref'];
+                    }
+                } else {
+                    $propVal['defalut'] = $prop;
+                    $propVal['type'] = is_numeric($prop) ? 'integer': 'string';
+                }
+                $formatedProps[$propName] = $propVal;
+            }
+            $this->swagger['definitions'][$defName]['properties'] = $formatedProps;
+        }
+
     }
 
     public function responseSchemaToDefinition($schema, $modelName, $level = 0)
