@@ -275,12 +275,13 @@ class SwaggerJson
             /** @var $definition ApiDefinition */
             $defName = $definition->name;
             $defProps = $definition->properties;
-            $formatedProps = [];
+            $formattedProps = [];
 
             foreach ($defProps as $propKey => $prop) {
-                [$propName, $propAlias] = explode('|', $propKey);
+                $propKeyArr = explode('|', $propKey);
+                $propName = $propKeyArr[0];
                 $propVal = [];
-                $propAlias && $propVal['description'] = $propAlias;
+                isset($propKeyArr[1]) && $propVal['description'] = $propKeyArr[1];
                 if (is_array($prop)) {
                     if (isset($prop['description']) && is_string($prop['description'])) {
                         $propVal['description'] = $prop['description'];
@@ -303,9 +304,9 @@ class SwaggerJson
                     $propVal['defalut'] = $prop;
                     $propVal['type'] = is_numeric($prop) ? 'integer': 'string';
                 }
-                $formatedProps[$propName] = $propVal;
+                $formattedProps[$propName] = $propVal;
             }
-            $this->swagger['definitions'][$defName]['properties'] = $formatedProps;
+            $this->swagger['definitions'][$defName]['properties'] = $formattedProps;
         }
 
     }
