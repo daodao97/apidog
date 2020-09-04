@@ -266,7 +266,7 @@ class SwaggerJson
     public function makeDefinition($definitions)
     {
         if (!$definitions) {
-            return false;
+            return;
         }
         if ($definitions instanceof ApiDefinitions) {
             $definitions = $definitions->definitions;
@@ -292,8 +292,8 @@ class SwaggerJson
                     }
 
                     if (isset($prop['default'])) {
-                        $propVal['defalut'] = $prop['default'];
-                        !isset($propVal['type']) && $propVal['type'] = is_numeric($default) ? 'integer': 'string';
+                        $propVal['default'] = $prop['default'];
+                        !isset($propVal['type']) && $propVal['type'] = is_numeric($propVal['default']) ? 'integer': 'string';
                     }
 
                     if (isset($prop['$ref'])) {
@@ -301,14 +301,13 @@ class SwaggerJson
                         $propVal['$ref'] = '#/definitions/' . $prop['$ref'];
                     }
                 } else {
-                    $propVal['defalut'] = $prop;
+                    $propVal['default'] = $prop;
                     $propVal['type'] = is_numeric($prop) ? 'integer': 'string';
                 }
                 $formattedProps[$propName] = $propVal;
             }
             $this->swagger['definitions'][$defName]['properties'] = $formattedProps;
         }
-
     }
 
     public function responseSchemaToDefinition($schema, $modelName, $level = 0)

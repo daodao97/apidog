@@ -99,7 +99,7 @@ swagger文档生成: 在`php bin/hyperf.php start` 启动 `http-server` 时, 通
 `Header`, `Quyer`, `Body`, `FormData`, `Path`
 
 ### 其他
-`ApiController`, `ApiResponse`, `ApiVersion`, `ApiServer`
+`ApiController`, `ApiResponse`, `ApiVersion`, `ApiServer`, `ApiDefinitions`, `ApiDefinition`
 
 ```php
 /**
@@ -113,9 +113,14 @@ class UserController {}
 
 `ApiVersion` 当你的统一个接口存在不同版本时, 可以使用此注解, 路由注册时会为每个木有增加版本号, 如上方代码注册的实际路由为 `/v1/user/***`
 
-`ApiResponse` 响应体的`schema`支持为key设置简介. 
+`ApiDefinition` 定义一个 `Definition`，用于Response的复用。 *swagger* 的difinition是以引用的方式来嵌套的，如果需要嵌套另外一个(值为object类型就需要嵌套了)，可以指定具体 `properties` 中的 `$ref` 属性
+
+`ApiDefinitions` 定义一个组`Definition`
+
+`ApiResponse` 响应体的`schema`支持为key设置简介. `$ref` 属性可以引用 `ApiDefinition` 定义好的结构(该属性优先级最高)
 ```php
 @ApiResponse(code="0", description="删除成功", schema={"id|这里是ID":1})
+@ApiResponse(code="0", description="删除成功", schema={"$ref": "ExampleResponse"})
 ```
 
 具体使用方式参见下方样例
@@ -143,6 +148,22 @@ use Hyperf\Utils\ApplicationContext;
 /**
  * @ApiVersion(version="v1")
  * @ApiController(tag="用户管理", description="用户的新增/修改/删除接口")
+ * @ApiDefinitions({
+ *  @ApiDefinition(name="UserOkResponse", properties={
+ *     "code|响应码": 200,
+ *     "msg|响应信息": "ok",
+ *     "data|响应数据": {"$ref": "UserInfoData"}
+ *  }),
+ *  @ApiDefinition(name="UserInfoData", properties={
+ *     "userInfo|用户数据": {"$ref": "UserInfoDetail"}
+ *  }),
+ *  @ApiDefinition(name="UserInfoDetail", properties={
+ *     "id|用户ID": 1,
+ *     "mobile|用户手机号": { "default": "13545321231", "type": "string" },
+ *     "nickname|用户昵称": "nickname",
+ *     "avatar": { "default": "avatar", "type": "string", "description": "用户头像" },
+ *  })
+ * })
  */
 class UserController extends AbstractController
 {
@@ -215,6 +236,23 @@ class UserController extends AbstractController
             'age' => 1,
         ];
     }
+
+    /**
+     * schema中可以指定$ref属性引用定义好的definition
+     * @GetApi(path="/user/info", description="获取用户详情")
+     * @Query(key="id", rule="required|integer|max:0")
+     * @ApiResponse(code="-1", description="参数错误")
+     * @ApiResponse(code="0", schema={"$ref": "UserOkResponse"})
+     */
+    public function info()
+    {
+        return [
+            'code' => 0,
+            'id' => 1,
+            'name' => '张三',
+            'age' => 1,
+        ];
+    }
 }
 ```
 
@@ -233,6 +271,9 @@ php bin/hyperf.php apidog:ui
 ![swagger](http://tva1.sinaimg.cn/large/007X8olVly1g6j91o6xroj31k10u079l.jpg)
 
 ## 更新日志
+- 20200904
+    - 增加 `ApiDefinitions` 与 `ApiDefinition` 注解，可用于相同Response结构体复用
+    - `ApiResponse schema` 增加 `$ref` 属性，用于指定由 `ApiDefinition` 定义的结构体
 - 20200813
     - 增加Api版本, `ApiVersion`, 可以给路由增加版本前缀
     - 增加多服务支持, `ApiServer`, 可以按服务生成`swagger.json`
