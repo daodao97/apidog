@@ -253,6 +253,36 @@ class UserController extends AbstractController
             'age' => 1,
         ];
     }
+
+    /**
+     * @GetApi(path="/users", summary="用户列表")
+     * @ApiResponse(code="200", description="ok", schema={{
+     *     "a|aa": {{
+     *          "a|aaa":"b","c|ccc":"d"
+     *      }},
+     *     "b|ids": {1,2,3},
+     *     "c|strings": {"a","b","c"},
+     *     "d|dd": {"a":"b","c":"d"},
+     *     "e|ee": "f"
+     * }})
+     */
+    public function list()
+    {
+        return [
+            [
+                "a" => [
+                    ["a" => "b", "c" => "d"]
+                ],
+                "b" => [1, 2, 3],
+                "c" => ["a", "b", "c"],
+                "d" => [
+                    "a" => "b",
+                    "c" => "d",
+                ],
+                "e" => "f",
+            ],
+        ];
+    }
 }
 ```
 
