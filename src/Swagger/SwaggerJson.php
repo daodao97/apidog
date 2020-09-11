@@ -126,6 +126,27 @@ class SwaggerJson
         }
     }
 
+    private function initModel()
+    {
+        $arraySchema = [
+            'type' => 'array',
+            'required' => [],
+            'items' => [
+                'type' => 'string',
+            ],
+        ];
+        $objectSchema = [
+            'type' => 'object',
+            'required' => [],
+            'items' => [
+                'type' => 'string',
+            ],
+        ];
+
+        $this->swagger['definitions']['ModelArray'] = $arraySchema;
+        $this->swagger['definitions']['ModelObject'] = $objectSchema;
+    }
+
     private function rules2schema($name, $rules)
     {
         $schema = [
@@ -152,6 +173,12 @@ class SwaggerJson
                 $type = $this->getTypeByRule($rule);
                 if ($type === 'string') {
                     in_array('required', explode('|', $rule)) && $schema['required'][] = $fieldName;
+                }
+                if ($type == 'array') {
+                    $property['$ref'] = '#/definitions/ModelArray';
+                }
+                if ($type == 'object') {
+                    $property['$ref'] = '#/definitions/ModelObject';
                 }
             }
             if ($type !== null) {
@@ -188,6 +215,7 @@ class SwaggerJson
 
     public function makeParameters($params, $path, $method)
     {
+        $this->initModel();
         $method = ucfirst($method);
         $path = str_replace(['{', '}'], '', $path);
         $parameters = [];
