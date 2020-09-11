@@ -34,7 +34,7 @@ abstract class Param extends AbstractAnnotation
 
     public function setRequire()
     {
-        $this->required = strpos($this->rule, 'required') !== false;
+        $this->required = in_array("required", explode('|', $this->rule));
 
         return $this;
     }

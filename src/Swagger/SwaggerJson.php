@@ -91,7 +91,7 @@ class SwaggerJson
 
         $this->makeDefinition($definitionsAnno);
         $definitionAnno && $this->makeDefinition([$definitionAnno]);
-        
+
         $tag = $controlerAnno->tag ?: $className;
         $this->swagger['tags'][$tag] = [
             'name' => $tag,
@@ -105,73 +105,42 @@ class SwaggerJson
         } elseif ($path[0] !== '/') {
             $path = $prefix . '/' . $path;
         }
-        if($versionAnno && $versionAnno->version) {
+        if ($versionAnno && $versionAnno->version) {
             $path = '/' . $versionAnno->version . $path;
         }
+
         $method = strtolower($mapping->methods[0]);
         $this->swagger['paths'][$path][$method] = [
-            'tags' => [
-                $tag,
-            ],
+            'tags' => [$tag],
             'summary' => $mapping->summary ?? '',
+            'description' => $mapping->description ?? '',
             'operationId' => implode('', array_map('ucfirst', explode('/', $path))) . $mapping->methods[0],
             'parameters' => $this->makeParameters($params, $path, $method),
             'produces' => [
                 "application/json",
             ],
             'responses' => $this->makeResponses($responses, $path, $method),
-            'description' => $mapping->description ?? '',
         ];
         if ($consumes !== null) {
             $this->swagger['paths'][$path][$method]['consumes'] = [$consumes];
         }
     }
 
-    public function initModel()
-    {
-        $arraySchema = [
-            'type' => 'array',
-            'required' => [],
-            'items' => [
-                'type' => 'string',
-            ],
-        ];
-        $objectSchema = [
-            'type' => 'object',
-            'required' => [],
-            'items' => [
-                'type' => 'string',
-            ],
-        ];
-
-        $this->swagger['definitions']['ModelArray'] = $arraySchema;
-        $this->swagger['definitions']['ModelObject'] = $objectSchema;
-    }
-
-    public function rules2schema($name, $rules)
+    private function rules2schema($name, $rules)
     {
         $schema = [
             'type' => 'object',
-            'required' => [],
             'properties' => [],
         ];
         foreach ($rules as $field => $rule) {
+            $type = null;
             $property = [];
+
             $fieldNameLabel = explode('|', $field);
             $fieldName = $fieldNameLabel[0];
-            if (!is_array($rule)) {
-                $type = $this->getTypeByRule($rule);
-                $property['type'] = $type;
-                if ($type == 'array') {
-                    $property['$ref'] = '#/definitions/ModelArray';
-                }
-                if ($type == 'object') {
-                    $property['$ref'] = '#/definitions/ModelObject';
-                }
-            } else {
+            if (is_array($rule)) {
                 $deepModelName = $name . ucfirst($fieldName);
                 if (Arr::isAssoc($rule)) {
-                    $type = 'object';
                     $this->rules2schema($deepModelName, $rule);
                     $property['$ref'] = '#/definitions/' . $deepModelName;
                 } else {
@@ -179,14 +148,21 @@ class SwaggerJson
                     $this->rules2schema($deepModelName, $rule[0]);
                     $property['items']['$ref'] = '#/definitions/' . $deepModelName;
                 }
+            } else {
+                $type = $this->getTypeByRule($rule);
+                if ($type === 'string') {
+                    in_array('required', explode('|', $rule)) && $schema['required'][] = $fieldName;
+                }
             }
-            $property['type'] = $type;
+            if ($type !== null) {
+                $property['type'] = $type;
+            }
             $property['description'] = $fieldNameLabel[1] ?? '';
+
             $schema['properties'][$fieldName] = $property;
         }
 
         $this->swagger['definitions'][$name] = $schema;
-        return $schema;
     }
 
     public function getTypeByRule($rule)
@@ -194,6 +170,9 @@ class SwaggerJson
         $default = explode('|', preg_replace('/\[.*\]/', '', $rule));
         if (array_intersect($default, ['int', 'lt', 'gt', 'ge'])) {
             return 'integer';
+        }
+        if (array_intersect($default, ['numeric'])) {
+            return 'number';
         }
         if (array_intersect($default, ['array'])) {
             return 'array';
@@ -210,7 +189,6 @@ class SwaggerJson
     public function makeParameters($params, $path, $method)
     {
         $method = ucfirst($method);
-        $this->initModel();
         $path = str_replace(['{', '}'], '', $path);
         $parameters = [];
         /** @var \Hyperf\Apidog\Annotation\Query $item */
@@ -245,17 +223,39 @@ class SwaggerJson
         /** @var ApiResponse $item */
         foreach ($responses as $item) {
             $resp[$item->code] = [
-                'description' => $item->description,
+                'description' => $item->description ?? '',
             ];
             if ($item->schema) {
                 if (isset($item->schema['$ref'])) {
                     $resp[$item->code]['schema']['$ref'] = '#/definitions/' . $item->schema['$ref'];
                     continue;
                 }
+
+                // 处理直接返回列表的情况 List<Integer> List<String>
+                if (isset($item->schema[0]) && !is_array($item->schema[0])) {
+                    $resp[$item->code]['schema']['type'] = 'array';
+                    if (is_int($item->schema[0])) {
+                        $resp[$item->code]['schema']['items'] = [
+                            "type" => 'integer',
+                        ];
+                    } elseif (is_string($item->schema[0])) {
+                        $resp[$item->code]['schema']['items'] = [
+                            "type" => 'string',
+                        ];
+                    }
+                    continue;
+                }
+
                 $modelName = implode('', array_map('ucfirst', explode('/', $path))) . ucfirst($method) . 'Response' . $item->code;
                 $ret = $this->responseSchemaToDefinition($item->schema, $modelName);
                 if ($ret) {
-                    $resp[$item->code]['schema']['$ref'] = '#/definitions/' . $modelName;
+                    // 处理List<String, Object>
+                    if (isset($item->schema[0]) && is_array($item->schema[0])) {
+                        $resp[$item->code]['schema']['type'] = 'array';
+                        $resp[$item->code]['schema']['items']['$ref'] = '#/definitions/' . $modelName;
+                    } else {
+                        $resp[$item->code]['schema']['$ref'] = '#/definitions/' . $modelName;
+                    }
                 }
             }
         }
@@ -275,6 +275,7 @@ class SwaggerJson
             /** @var $definition ApiDefinition */
             $defName = $definition->name;
             $defProps = $definition->properties;
+
             $formattedProps = [];
 
             foreach ($defProps as $propKey => $prop) {
@@ -293,16 +294,14 @@ class SwaggerJson
 
                     if (isset($prop['default'])) {
                         $propVal['default'] = $prop['default'];
-                        !isset($propVal['type']) && $propVal['type'] = is_numeric($propVal['default']) ? 'integer': 'string';
+                        !isset($propVal['type']) && $propVal['type'] = is_numeric($propVal['default']) ? 'integer' : 'string';
                     }
-
                     if (isset($prop['$ref'])) {
-                        $propVal['type'] = 'object';
                         $propVal['$ref'] = '#/definitions/' . $prop['$ref'];
                     }
                 } else {
                     $propVal['default'] = $prop;
-                    $propVal['type'] = is_numeric($prop) ? 'integer': 'string';
+                    $propVal['type'] = is_numeric($prop) ? 'integer' : 'string';
                 }
                 $formattedProps[$propName] = $propVal;
             }
@@ -316,15 +315,24 @@ class SwaggerJson
             return false;
         }
         $definition = [];
-        foreach ($schema as $keyString => $val) {
-            $keyArray =  explode('|',$keyString);
-            $key = $keyArray[0];
-            $_key = str_replace('_', '', $key);
+
+        // 处理 Map<String, String> Map<String, Object> Map<String, List>
+        $schemaContent = $schema;
+        // 处理 List<Map<String, Object>>
+        if (isset($schema[0]) && is_array($schema[0])) {
+            $schemaContent = $schema[0];
+        }
+        foreach ($schemaContent as $keyString => $val) {
             $property = [];
             $property['type'] = gettype($val);
+
+            $keyArray = explode('|', $keyString);
+            $key = $keyArray[0];
+            $_key = str_replace('_', '', $key);
+            $property['description'] = $keyArray[1] ?? '';
             if (is_array($val)) {
                 $definitionName = $modelName . ucfirst($_key);
-                if ($property['type'] == 'array' && isset($val[0])) {
+                if ($property['type'] === 'array' && isset($val[0])) {
                     if (is_array($val[0])) {
                         $property['type'] = 'array';
                         $ret = $this->responseSchemaToDefinition($val[0], $definitionName, 1);
@@ -334,7 +342,8 @@ class SwaggerJson
                         $property['items']['type'] = gettype($val[0]);
                     }
                 } else {
-                    $property['type'] = 'object';
+                    // definition引用不能有type
+                    unset($property['type']);
                     $ret = $this->responseSchemaToDefinition($val, $definitionName, 1);
                     $property['$ref'] = '#/definitions/' . $definitionName;
                 }
@@ -344,9 +353,10 @@ class SwaggerJson
             } else {
                 $property['default'] = $val;
             }
-            $property['description'] = $keyArray[1] ?? '';
+
             $definition['properties'][$key] = $property;
         }
+
         if ($level === 0) {
             $this->swagger['definitions'][$modelName] = $definition;
         }
@@ -363,7 +373,7 @@ class SwaggerJson
             return;
         }
         $outputFile = str_replace('{server}', $this->server, $outputFile);
-        file_put_contents($outputFile, json_encode($this->swagger, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+        file_put_contents($outputFile, json_encode($this->swagger, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         $this->logger->debug('Generate swagger.json success!');
     }
 }
