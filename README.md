@@ -253,6 +253,36 @@ class UserController extends AbstractController
             'age' => 1,
         ];
     }
+
+    /**
+     * @GetApi(path="/users", summary="用户列表")
+     * @ApiResponse(code="200", description="ok", schema={{
+     *     "a|aa": {{
+     *          "a|aaa":"b","c|ccc":"d"
+     *      }},
+     *     "b|ids": {1,2,3},
+     *     "c|strings": {"a","b","c"},
+     *     "d|dd": {"a":"b","c":"d"},
+     *     "e|ee": "f"
+     * }})
+     */
+    public function list()
+    {
+        return [
+            [
+                "a" => [
+                    ["a" => "b", "c" => "d"]
+                ],
+                "b" => [1, 2, 3],
+                "c" => ["a", "b", "c"],
+                "d" => [
+                    "a" => "b",
+                    "c" => "d",
+                ],
+                "e" => "f",
+            ],
+        ];
+    }
 }
 ```
 
@@ -271,9 +301,11 @@ php bin/hyperf.php apidog:ui
 ![swagger](http://tva1.sinaimg.cn/large/007X8olVly1g6j91o6xroj31k10u079l.jpg)
 
 ## 更新日志
+- 20200911
+    - Response 增加纯列表模式 [@zxyfaxcn](https://github.com/zxyfaxcn)
 - 20200904
-    - 增加 `ApiDefinitions` 与 `ApiDefinition` 注解，可用于相同Response结构体复用
-    - `ApiResponse schema` 增加 `$ref` 属性，用于指定由 `ApiDefinition` 定义的结构体
+    - 增加 `ApiDefinitions` 与 `ApiDefinition` 注解，可用于相同Response结构体复用 [@jobinli](https://github.com/jobinli)
+    - `ApiResponse schema` 增加 `$ref` 属性，用于指定由 `ApiDefinition` 定义的结构体 [@jobinli](https://github.com/jobinli)
 - 20200813
     - 增加Api版本, `ApiVersion`, 可以给路由增加版本前缀
     - 增加多服务支持, `ApiServer`, 可以按服务生成`swagger.json`
