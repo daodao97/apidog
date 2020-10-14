@@ -305,11 +305,11 @@ php bin/hyperf.php apidog:ui
 php bin/hyperf.php apidog:ui --port 8888
 ```
 
-![DSRQnj](https://cdn.jsdelivr.net/gh/daodao97/FigureBed@master/uPic/DSRQnj.png)
+![hMvJnQ](https://gitee.com/daodao97/asset/raw/master/imgs/hMvJnQ.jpg)
 
 ## Swagger展示
 
-![swagger](http://tva1.sinaimg.cn/large/007X8olVly1g6j91o6xroj31k10u079l.jpg)
+![AOFVzI](https://gitee.com/daodao97/asset/raw/master/imgs/AOFVzI.jpg)
 
 ## 更新日志
 - 20201014
