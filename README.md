@@ -288,7 +288,16 @@ class UserController extends AbstractController
 
 ## Swagger UI启动
 
-组件提供了一个快捷命令, 用来快速启动一个 `swagger ui`.
+本组件提供了两种方式来启用`SwaggerUI`
+, 当`config/autoload/apidog.php enable = true` 时
+
+#### 方式一 
+
+系统启动时, `swagger.json` 会自动输出到配置文件中定义的 `output_file`中, 此时我们到`swagger ui`的前端文件结合`nginx`启动web服务
+
+#### 方式二
+
+也可以使用组件提供的快捷命令, 快速启动一个 `swagger ui`.
 
 ```bash
 php bin/hyperf.php apidog:ui
