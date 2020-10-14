@@ -6,6 +6,7 @@ use Hyperf\Command\Annotation\Command;
 use Hyperf\Command\Command as HyperfCommand;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\Utils\ApplicationContext;
+use Symfony\Component\Console\Input\InputOption;
 
 /**
  * @Command
@@ -16,6 +17,11 @@ class UICommand extends HyperfCommand
 
     protected $coroutine = false;
 
+    protected function getArguments()
+    {
+        $this->addOption('port', 'p', InputOption::VALUE_OPTIONAL, 'Which port you want the SwaggerUi use.', 9939);
+    }
+
     public function handle()
     {
         $dir = __DIR__;
@@ -25,8 +31,8 @@ class UICommand extends HyperfCommand
         $servers = $config->get('server.servers');
         $ui = 'default';
         $command = $this;
-        $host = '127.0.0.1';
-        $port = 9939;
+        $host = '0.0.0.0';
+        $port = (int)$this->input->getOption('port');
 
         $http = new \Swoole\Http\Server($host, $port);
         $http->set([
@@ -50,7 +56,7 @@ class UICommand extends HyperfCommand
                     $index_html = $root . '/' . $ui;
                     $html = file_get_contents($index_html . '/index_tpl.html');
                     $path_info = explode('/', $copy_file);
-                    $html = str_replace('{swagger-json-url}', sprintf('http://%s:%s/%s', $host, $port, end($path_info)), $html);
+                    $html = str_replace('{swagger-json-url}', end($path_info), $html);
                     file_put_contents($index_html . '/index.html', $html);
                 }
             }

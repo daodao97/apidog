@@ -301,6 +301,8 @@ class UserController extends AbstractController
 
 ```bash
 php bin/hyperf.php apidog:ui
+
+php bin/hyperf.php apidog:ui --port 8888
 ```
 
 ![DSRQnj](https://cdn.jsdelivr.net/gh/daodao97/FigureBed@master/uPic/DSRQnj.png)

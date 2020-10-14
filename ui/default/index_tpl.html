@@ -37,7 +37,7 @@
         console.log(SwaggerUIBundle.plugins)
         // Begin Swagger UI call region
         const ui = SwaggerUIBundle({
-            url: "{swagger-json-url}",
+            url: "http://" + location.host + "/{swagger-json-url}",
             dom_id: '#swagger-ui',
             deepLinking: true,
             docExpansion: 'list',
