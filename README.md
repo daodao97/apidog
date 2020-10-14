@@ -312,6 +312,8 @@ php bin/hyperf.php apidog:ui --port 8888
 ![swagger](http://tva1.sinaimg.cn/large/007X8olVly1g6j91o6xroj31k10u079l.jpg)
 
 ## 更新日志
+- 20201014
+    - 优化swagger ui, 命令模式监听`0.0.0.0`, 并支持自定义端口
 - 20200911
     - Response 增加纯列表模式 [@zxyfaxcn](https://github.com/zxyfaxcn)
 - 20200904
