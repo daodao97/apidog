@@ -392,6 +392,19 @@ class SwaggerJson
         return $definition;
     }
 
+    public function putFile(string $file, string $content)
+    {
+        $pathInfo = pathinfo($file);
+        if (!empty($pathInfo['dirname'])) {
+            if (file_exists($pathInfo['dirname']) === false) {
+                if (@mkdir($pathInfo['dirname'], 0777, true) === false) {
+                    return false;
+                }
+            }
+        }
+        return @file_put_contents($file, $content);
+    }
+
     public function save()
     {
         $this->swagger['tags'] = array_values($this->swagger['tags'] ?? []);
@@ -401,7 +414,7 @@ class SwaggerJson
             return;
         }
         $outputFile = str_replace('{server}', $this->server, $outputFile);
-        file_put_contents($outputFile, json_encode($this->swagger, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        $this->putFile($outputFile, json_encode($this->swagger, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         $this->logger->debug('Generate swagger.json success!');
     }
 }
