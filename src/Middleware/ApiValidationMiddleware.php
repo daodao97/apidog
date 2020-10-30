@@ -60,7 +60,7 @@ class ApiValidationMiddleware extends CoreMiddleware
             $exceptionEnable = $config->get('apidog.exception_enable', false);
             if ($exceptionEnable) {
                 $fieldErrorMessage = $config->get('apidog.field_error_message', 'message');
-                throw new ApiDocException(0, $fieldErrorMessage);
+                throw new ApiDocException($fieldErrorMessage);
             }
             $httpStatusCode = $config->get('apidog.http_status_code', 400);
             return $this->response->json($result)->withStatus($httpStatusCode);
