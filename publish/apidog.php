@@ -16,6 +16,7 @@ return [
     'http_status_code' => 400,
     'field_error_code' => 'code',
     'field_error_message' => 'message',
+    'exception_enable' => false,
     // swagger 的基础配置
     'swagger' => [
         'swagger' => '2.0',
