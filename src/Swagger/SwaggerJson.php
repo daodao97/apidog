@@ -21,7 +21,6 @@ use Hyperf\HttpServer\Annotation\Mapping;
 use Hyperf\Logger\LoggerFactory;
 use Hyperf\Utils\ApplicationContext;
 use Hyperf\Utils\Arr;
-use Lengbin\Helper\YiiSoft\Arrays\ArrayHelper;
 
 class SwaggerJson
 {
