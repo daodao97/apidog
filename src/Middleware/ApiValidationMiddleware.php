@@ -14,7 +14,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Hyperf\Contract\ConfigInterface;
-use Hyperf\Apidog\Exception\ApiDocException;
+use Hyperf\Apidog\Exception\ApiDogException;
 
 class ApiValidationMiddleware extends CoreMiddleware
 {
@@ -60,7 +60,7 @@ class ApiValidationMiddleware extends CoreMiddleware
             $exceptionEnable = $config->get('apidog.exception_enable', false);
             if ($exceptionEnable) {
                 $fieldErrorMessage = $config->get('apidog.field_error_message', 'message');
-                throw new ApiDocException($fieldErrorMessage);
+                throw new ApiDogException($result[$fieldErrorMessage]);
             }
             $httpStatusCode = $config->get('apidog.http_status_code', 400);
             return $this->response->json($result)->withStatus($httpStatusCode);

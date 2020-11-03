@@ -4,7 +4,7 @@ namespace Hyperf\Apidog\Annotation;
 
 /**
  * @Annotation
- * @Target({"METHOD"})
+ * @Target({"METHOD", "CLASS"})
  */
 class Query extends Param
 {

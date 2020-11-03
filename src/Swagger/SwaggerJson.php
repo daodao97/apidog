@@ -12,13 +12,16 @@ use Hyperf\Apidog\Annotation\ApiServer;
 use Hyperf\Apidog\Annotation\ApiVersion;
 use Hyperf\Apidog\Annotation\Body;
 use Hyperf\Apidog\Annotation\FormData;
+use Hyperf\Apidog\Annotation\Header;
 use Hyperf\Apidog\Annotation\Param;
+use Hyperf\Apidog\Annotation\Query;
 use Hyperf\Apidog\ApiAnnotation;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\HttpServer\Annotation\Mapping;
 use Hyperf\Logger\LoggerFactory;
 use Hyperf\Utils\ApplicationContext;
 use Hyperf\Utils\Arr;
+use Lengbin\Helper\YiiSoft\Arrays\ArrayHelper;
 
 class SwaggerJson
 {
@@ -62,7 +65,18 @@ class SwaggerJson
         if ($bindServer !== $this->server) {
             return;
         }
+
         $methodAnnotations = ApiAnnotation::methodMetadata($className, $methodName);
+
+        $headerAnnotation = $classAnnotation[Header::class] ?? null;
+        $queryAnnotation = $classAnnotation[Query::class] ?? null;
+        if ($headerAnnotation !== null) {
+            $methodAnnotations[] = $headerAnnotation;
+        }
+        if ($queryAnnotation !== null) {
+            $methodAnnotations[] = $queryAnnotation;
+        }
+
         if (!$controlerAnno || !$methodAnnotations) {
             return;
         }
@@ -88,13 +102,12 @@ class SwaggerJson
                 $consumes = 'application/json';
             }
         }
-
         $this->makeDefinition($definitionsAnno);
         $definitionAnno && $this->makeDefinition([$definitionAnno]);
 
         $tag = $controlerAnno->tag ?: $className;
         $this->swagger['tags'][$tag] = [
-            'name' => $tag,
+            'name'        => $tag,
             'description' => $controlerAnno->description,
         ];
 
@@ -111,15 +124,15 @@ class SwaggerJson
 
         $method = strtolower($mapping->methods[0]);
         $this->swagger['paths'][$path][$method] = [
-            'tags' => [$tag],
-            'summary' => $mapping->summary ?? '',
+            'tags'        => [$tag],
+            'summary'     => $mapping->summary ?? '',
             'description' => $mapping->description ?? '',
             'operationId' => implode('', array_map('ucfirst', explode('/', $path))) . $mapping->methods[0],
-            'parameters' => $this->makeParameters($params, $path, $method),
-            'produces' => [
+            'parameters'  => $this->makeParameters($params, $path, $method),
+            'produces'    => [
                 "application/json",
             ],
-            'responses' => $this->makeResponses($responses, $path, $method),
+            'responses'   => $this->makeResponses($responses, $path, $method),
         ];
         if ($consumes !== null) {
             $this->swagger['paths'][$path][$method]['consumes'] = [$consumes];
@@ -129,16 +142,16 @@ class SwaggerJson
     private function initModel()
     {
         $arraySchema = [
-            'type' => 'array',
+            'type'     => 'array',
             'required' => [],
-            'items' => [
+            'items'    => [
                 'type' => 'string',
             ],
         ];
         $objectSchema = [
-            'type' => 'object',
+            'type'     => 'object',
             'required' => [],
-            'items' => [
+            'items'    => [
                 'type' => 'string',
             ],
         ];
@@ -150,7 +163,7 @@ class SwaggerJson
     private function rules2schema($name, $rules)
     {
         $schema = [
-            'type' => 'object',
+            'type'       => 'object',
             'properties' => [],
         ];
         foreach ($rules as $field => $rule) {
@@ -159,6 +172,21 @@ class SwaggerJson
 
             $fieldNameLabel = explode('|', $field);
             $fieldName = $fieldNameLabel[0];
+            if (strpos($fieldName, '.')) {
+                $fieldNames = explode('.', $fieldName);
+                $fieldName = array_shift($fieldNames);
+                $endName = array_pop($fieldNames);
+                $fieldNames = array_reverse($fieldNames);
+                $newRules = '{"' . $endName . '|'. $fieldNameLabel[1].'":"' . $rule . '"}';
+                foreach ($fieldNames as $v) {
+                    if ($v === '*') {
+                        $newRules = '[' . $newRules . ']';
+                    } else {
+                        $newRules = '{"' . $v . '":' . $newRules . '}';
+                    }
+                }
+                $rule = json_decode($newRules, true);
+            }
             if (is_array($rule)) {
                 $deepModelName = $name . ucfirst($fieldName);
                 if (Arr::isAssoc($rule)) {
@@ -183,19 +211,22 @@ class SwaggerJson
             }
             if ($type !== null) {
                 $property['type'] = $type;
+                if (!in_array($type, ['array', 'object'])) {
+                    $property['example'] = $type;
+                }
             }
             $property['description'] = $fieldNameLabel[1] ?? '';
 
             $schema['properties'][$fieldName] = $property;
         }
-
         $this->swagger['definitions'][$name] = $schema;
     }
 
     public function getTypeByRule($rule)
     {
         $default = explode('|', preg_replace('/\[.*\]/', '', $rule));
-        if (array_intersect($default, ['int', 'lt', 'gt', 'ge'])) {
+
+        if (array_intersect($default, ['int', 'lt', 'gt', 'ge', 'integer'])) {
             return 'integer';
         }
         if (array_intersect($default, ['numeric'])) {
@@ -224,11 +255,19 @@ class SwaggerJson
             if ($item->rule !== null && in_array('array', explode('|', $item->rule))) {
                 $item->name .= '[]';
             }
+            $name = $item->name;
+            if (strpos($item->name, '.')) {
+                $names = explode('.', $name);
+                $name = array_shift($names);
+                foreach ($names as $str) {
+                    $name .= "[{$str}]";
+                }
+            }
             $parameters[$item->name] = [
-                'in' => $item->in,
-                'name' => $item->name,
+                'in'          => $item->in,
+                'name'        => $name,
                 'description' => $item->description,
-                'required' => $item->required,
+                'required'    => $item->required,
             ];
             if ($item instanceof Body) {
                 $modelName = $method . implode('', array_map('ucfirst', explode('/', $path)));
@@ -236,7 +275,9 @@ class SwaggerJson
                 $parameters[$item->name]['schema']['$ref'] = '#/definitions/' . $modelName;
             } else {
                 $type = $this->getTypeByRule($item->rule);
-                $parameters[$item->name]['type'] = $type;
+                if ($type !== 'array') {
+                    $parameters[$item->name]['type'] = $type;
+                }
                 $parameters[$item->name]['default'] = $item->default;
             }
         }
@@ -322,14 +363,24 @@ class SwaggerJson
 
                     if (isset($prop['default'])) {
                         $propVal['default'] = $prop['default'];
-                        !isset($propVal['type']) && $propVal['type'] = is_numeric($propVal['default']) ? 'integer' : 'string';
+                        $type = gettype($propVal['default']);
+                        if (in_array($type, ['double', 'float'])) {
+                            $type = 'number';
+                        }
+                        !isset($propVal['type']) && $propVal['type'] = $type;
+                        $propVal['example'] = $propVal['type'] === 'number' ? 'float' : $propVal['type'];
                     }
                     if (isset($prop['$ref'])) {
                         $propVal['$ref'] = '#/definitions/' . $prop['$ref'];
                     }
                 } else {
                     $propVal['default'] = $prop;
-                    $propVal['type'] = is_numeric($prop) ? 'integer' : 'string';
+                    $type = gettype($prop);
+                    if (in_array($type, ['double', 'float'])) {
+                        $type = 'number';
+                    }
+                    $propVal['type'] = $type;
+                    $propVal['example'] = $type === 'number' ? 'float' : $type;
                 }
                 $formattedProps[$propName] = $propVal;
             }
@@ -353,6 +404,9 @@ class SwaggerJson
         foreach ($schemaContent as $keyString => $val) {
             $property = [];
             $property['type'] = gettype($val);
+            if (in_array($property['type'], ['double', 'float'])) {
+                $property['type'] = 'number';
+            }
 
             $keyArray = explode('|', $keyString);
             $key = $keyArray[0];
@@ -367,7 +421,9 @@ class SwaggerJson
                         $property['items']['$ref'] = '#/definitions/' . $definitionName;
                     } else {
                         $property['type'] = 'array';
-                        $property['items']['type'] = gettype($val[0]);
+                        $itemType = gettype($val[0]);
+                        $property['items']['type'] = $itemType;
+                        $property['example'] = [$itemType === 'number' ? 'float' : $itemType];
                     }
                 } else {
                     // definition引用不能有type
@@ -378,8 +434,10 @@ class SwaggerJson
                 if (isset($ret)) {
                     $this->swagger['definitions'][$definitionName] = $ret;
                 }
+
             } else {
                 $property['default'] = $val;
+                $property['example'] = $property['type'] === 'number' ? 'float' : $property['type'];
             }
 
             $definition['properties'][$key] = $property;
