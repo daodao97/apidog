@@ -455,12 +455,12 @@ class SwaggerJson
         $pathInfo = pathinfo($file);
         if (!empty($pathInfo['dirname'])) {
             if (file_exists($pathInfo['dirname']) === false) {
-                if (@mkdir($pathInfo['dirname'], 0777, true) === false) {
+                if (mkdir($pathInfo['dirname'], 0777, true) === false) {
                     return false;
                 }
             }
         }
-        return @file_put_contents($file, $content);
+        return file_put_contents($file, $content);
     }
 
     public function save()
