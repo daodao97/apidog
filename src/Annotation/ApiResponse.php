@@ -13,6 +13,7 @@ class ApiResponse extends AbstractAnnotation
     public $code;
     public $description;
     public $schema;
+    public $template;
 
     public function __construct($value = null)
     {

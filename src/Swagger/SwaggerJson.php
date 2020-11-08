@@ -287,12 +287,22 @@ class SwaggerJson
     public function makeResponses($responses, $path, $method)
     {
         $path = str_replace(['{', '}'], '', $path);
+        $templates = $this->config->get('apidog.templates', []);
+
         $resp = [];
         /** @var ApiResponse $item */
         foreach ($responses as $item) {
             $resp[$item->code] = [
                 'description' => $item->description ?? '',
             ];
+            if ($item->template && Arr::get($templates, $item->template)) {
+                $json = json_encode($templates[$item->template]);
+                if (!$item->schema) {
+                    $item->schema = [];
+                }
+                $template = str_replace('"{template}"', json_encode($item->schema), $json);
+                $item->schema = json_decode($template, true);
+            }
             if ($item->schema) {
                 if (isset($item->schema['$ref'])) {
                     $resp[$item->code]['schema']['$ref'] = '#/definitions/' . $item->schema['$ref'];
@@ -406,7 +416,6 @@ class SwaggerJson
             if (in_array($property['type'], ['double', 'float'])) {
                 $property['type'] = 'number';
             }
-
             $keyArray = explode('|', $keyString);
             $key = $keyArray[0];
             $_key = str_replace('_', '', $key);
@@ -427,8 +436,12 @@ class SwaggerJson
                 } else {
                     // definition引用不能有type
                     unset($property['type']);
-                    $ret = $this->responseSchemaToDefinition($val, $definitionName, 1);
-                    $property['$ref'] = '#/definitions/' . $definitionName;
+                    if (count($val) > 0) {
+                        $ret = $this->responseSchemaToDefinition($val, $definitionName, 1);
+                        $property['$ref'] = '#/definitions/' . $definitionName;
+                    } else {
+                        $property['$ref'] = '#/definitions/ModelObject';
+                    }
                 }
                 if (isset($ret)) {
                     $this->swagger['definitions'][$definitionName] = $ret;
