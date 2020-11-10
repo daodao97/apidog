@@ -11,14 +11,17 @@ use Hyperf\HttpServer\Annotation\Controller;
 class ApiController extends Controller
 {
     public $tag;
+
     /**
      * @var null|string
      */
     public $prefix = '';
+
     /**
      * @var string
      */
     public $server = 'http';
+
     /**
      * @var string
      */

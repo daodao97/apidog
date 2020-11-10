@@ -8,10 +8,10 @@ class ConfigProvider
     {
         return [
             'commands' => [
-                UICommand::class
+                UICommand::class,
             ],
             'dependencies' => [
-                \Hyperf\HttpServer\Router\DispatcherFactory::class => DispatcherFactory::class
+                \Hyperf\HttpServer\Router\DispatcherFactory::class => DispatcherFactory::class,
             ],
             'listeners' => [
                 BootAppConfListener::class,

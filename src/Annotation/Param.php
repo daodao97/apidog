@@ -7,9 +7,13 @@ use Hyperf\Di\Annotation\AbstractAnnotation;
 abstract class Param extends AbstractAnnotation
 {
     public $in;
+
     public $key;
+
     public $rule;
+
     public $default;
+
     public $description;
 
     public function __construct($value = null)

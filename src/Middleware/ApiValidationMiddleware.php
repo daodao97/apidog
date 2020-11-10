@@ -4,8 +4,9 @@ declare(strict_types=1);
 namespace Hyperf\Apidog\Middleware;
 
 use FastRoute\Dispatcher;
+use Hyperf\Apidog\Exception\ApiDogException;
 use Hyperf\Apidog\Validation\ValidationApi;
-use Hyperf\Config\Annotation\Value;
+use Hyperf\Contract\ConfigInterface;
 use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\HttpServer\Contract\ResponseInterface as HttpResponse;
 use Hyperf\HttpServer\CoreMiddleware;
@@ -13,8 +14,6 @@ use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Hyperf\Contract\ConfigInterface;
-use Hyperf\Apidog\Exception\ApiDogException;
 
 class ApiValidationMiddleware extends CoreMiddleware
 {

@@ -6,5 +6,4 @@ use Hyperf\Server\Exception\ServerException;
 
 class ApiDogException extends ServerException
 {
-
 }

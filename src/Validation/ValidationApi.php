@@ -16,6 +16,7 @@ use Psr\Http\Message\ServerRequestInterface;
 class ValidationApi
 {
     public $validation;
+
     public function __construct()
     {
         $this->validation = make(Validation::class);
@@ -62,12 +63,12 @@ class ValidationApi
             }, $headers);
             [
                 $data,
-                $error
+                $error,
             ] = $this->check($header_rules, $headers, $controllerInstance);
             if ($data === null) {
                 return [
                     $field_error_code => $error_code,
-                    $field_error_message => implode(PHP_EOL, $error)
+                    $field_error_message => implode(PHP_EOL, $error),
                 ];
             }
         }
@@ -75,12 +76,12 @@ class ValidationApi
         if ($query_rules) {
             [
                 $data,
-                $error
+                $error,
             ] = $this->check($query_rules, $request->getQueryParams(), $controllerInstance);
             if ($data === null) {
                 return [
                     $field_error_code => $error_code,
-                    $field_error_message => implode(PHP_EOL, $error)
+                    $field_error_message => implode(PHP_EOL, $error),
                 ];
             }
             Context::set(ServerRequestInterface::class, $request->withQueryParams($data));
@@ -89,13 +90,12 @@ class ValidationApi
         if ($body_rules) {
             [
                 $data,
-                $error
-            ] = $this->check($body_rules, (array)json_decode($request->getBody()
-                ->getContents(), true), $controllerInstance);
+                $error,
+            ] = $this->check($body_rules, (array)json_decode($request->getBody()->getContents(), true), $controllerInstance);
             if ($data === null) {
                 return [
                     $field_error_code => $error_code,
-                    $field_error_message => implode(PHP_EOL, $error)
+                    $field_error_message => implode(PHP_EOL, $error),
                 ];
             }
             Context::set(ServerRequestInterface::class, $request->withBody(new SwooleStream(json_encode($data))));
@@ -104,12 +104,12 @@ class ValidationApi
         if ($form_data_rules) {
             [
                 $data,
-                $error
+                $error,
             ] = $this->check($form_data_rules, $request->getParsedBody(), $controllerInstance);
             if ($data === null) {
                 return [
                     $field_error_code => $error_code,
-                    $field_error_message => implode(PHP_EOL, $error)
+                    $field_error_message => implode(PHP_EOL, $error),
                 ];
             }
             Context::set(ServerRequestInterface::class, $request->withParsedBody($data));
@@ -124,7 +124,7 @@ class ValidationApi
     {
         [
             $data,
-            $error
+            $error,
         ] = $this->validation->check($rules, $data, $controllerInstance);
         return [$data, $error];
     }

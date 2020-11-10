@@ -106,7 +106,7 @@ class SwaggerJson
 
         $tag = $controlerAnno->tag ?: $className;
         $this->swagger['tags'][$tag] = [
-            'name'        => $tag,
+            'name' => $tag,
             'description' => $controlerAnno->description,
         ];
 
@@ -123,15 +123,15 @@ class SwaggerJson
 
         $method = strtolower($mapping->methods[0]);
         $this->swagger['paths'][$path][$method] = [
-            'tags'        => [$tag],
-            'summary'     => $mapping->summary ?? '',
+            'tags' => [$tag],
+            'summary' => $mapping->summary ?? '',
             'description' => $mapping->description ?? '',
             'operationId' => implode('', array_map('ucfirst', explode('/', $path))) . $mapping->methods[0],
-            'parameters'  => $this->makeParameters($params, $path, $method),
-            'produces'    => [
+            'parameters' => $this->makeParameters($params, $path, $method),
+            'produces' => [
                 "application/json",
             ],
-            'responses'   => $this->makeResponses($responses, $path, $method),
+            'responses' => $this->makeResponses($responses, $path, $method),
         ];
         if ($consumes !== null) {
             $this->swagger['paths'][$path][$method]['consumes'] = [$consumes];
@@ -141,16 +141,16 @@ class SwaggerJson
     private function initModel()
     {
         $arraySchema = [
-            'type'     => 'array',
+            'type' => 'array',
             'required' => [],
-            'items'    => [
+            'items' => [
                 'type' => 'string',
             ],
         ];
         $objectSchema = [
-            'type'     => 'object',
+            'type' => 'object',
             'required' => [],
-            'items'    => [
+            'items' => [
                 'type' => 'string',
             ],
         ];
@@ -162,7 +162,7 @@ class SwaggerJson
     private function rules2schema($name, $rules)
     {
         $schema = [
-            'type'       => 'object',
+            'type' => 'object',
             'properties' => [],
         ];
         foreach ($rules as $field => $rule) {
@@ -176,7 +176,7 @@ class SwaggerJson
                 $fieldName = array_shift($fieldNames);
                 $endName = array_pop($fieldNames);
                 $fieldNames = array_reverse($fieldNames);
-                $newRules = '{"' . $endName . '|'. $fieldNameLabel[1].'":"' . $rule . '"}';
+                $newRules = '{"' . $endName . '|' . $fieldNameLabel[1] . '":"' . $rule . '"}';
                 foreach ($fieldNames as $v) {
                     if ($v === '*') {
                         $newRules = '[' . $newRules . ']';
@@ -263,10 +263,10 @@ class SwaggerJson
                 }
             }
             $parameters[$item->name] = [
-                'in'          => $item->in,
-                'name'        => $name,
+                'in' => $item->in,
+                'name' => $name,
                 'description' => $item->description,
-                'required'    => $item->required,
+                'required' => $item->required,
             ];
             if ($item instanceof Body) {
                 $modelName = $method . implode('', array_map('ucfirst', explode('/', $path)));
@@ -446,7 +446,6 @@ class SwaggerJson
                 if (isset($ret)) {
                     $this->swagger['definitions'][$definitionName] = $ret;
                 }
-
             } else {
                 $property['default'] = $val;
                 $property['example'] = $property['type'] === 'number' ? 'float' : $property['type'];
@@ -467,7 +466,7 @@ class SwaggerJson
         $pathInfo = pathinfo($file);
         if (!empty($pathInfo['dirname'])) {
             if (file_exists($pathInfo['dirname']) === false) {
-                if (mkdir($pathInfo['dirname'], 0777, true) === false) {
+                if (mkdir($pathInfo['dirname'], 0644, true) === false) {
                     return false;
                 }
             }

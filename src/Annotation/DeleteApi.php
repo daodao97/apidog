@@ -11,9 +11,13 @@ use Hyperf\HttpServer\Annotation\Mapping;
 class DeleteApi extends Mapping
 {
     public $path;
+
     public $summary;
+
     public $description;
+
     public $deprecated;
+
     public $methods = ['DELETE'];
 
     public function __construct($value = null)

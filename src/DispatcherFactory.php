@@ -13,7 +13,7 @@ class DispatcherFactory extends HyperfDispatcherFactory
 {
     protected function handleController(string $className, Controller $annotation, array $methodMetadata, array $middlewares = []): void
     {
-        if (! $methodMetadata) {
+        if (!$methodMetadata) {
             return;
         }
         $prefix = $this->getPrefix($className, $annotation->prefix);
@@ -28,7 +28,6 @@ class DispatcherFactory extends HyperfDispatcherFactory
                 $methodMiddlewares = array_merge($methodMiddlewares, $this->handleMiddleware($values));
                 $methodMiddlewares = array_unique($methodMiddlewares);
             }
-
 
             foreach ($values as $mapping) {
                 if (!($mapping instanceof Mapping)) {

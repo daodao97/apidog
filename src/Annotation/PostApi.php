@@ -11,9 +11,13 @@ use Hyperf\HttpServer\Annotation\Mapping;
 class PostApi extends Mapping
 {
     public $path;
+
     public $summary;
+
     public $description;
+
     public $deprecated;
+
     public $methods = ['POST'];
 
     public function __construct($value = null)

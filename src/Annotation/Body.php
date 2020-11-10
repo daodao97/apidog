@@ -2,9 +2,6 @@
 declare(strict_types=1);
 namespace Hyperf\Apidog\Annotation;
 
-use Hyperf\Di\Annotation\AbstractAnnotation;
-use Hyperf\Utils\Arr;
-
 /**
  * @Annotation
  * @Target({"METHOD"})
@@ -12,8 +9,11 @@ use Hyperf\Utils\Arr;
 class Body extends Param
 {
     public $in = 'body';
+
     public $name = 'body';
+
     public $rules;
+
     public $description = 'body';
 
     public function __construct($value = null)

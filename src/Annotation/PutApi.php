@@ -11,9 +11,13 @@ use Hyperf\HttpServer\Annotation\Mapping;
 class PutApi extends Mapping
 {
     public $path;
+
     public $summary;
+
     public $description;
+
     public $deprecated;
+
     public $methods = ['PUT'];
 
     public function __construct($value = null)

@@ -4,11 +4,9 @@ declare(strict_types=1);
 if (!function_exists('array_map_recursive')) {
     function array_map_recursive(callable $func, array $data)
     {
-        $result = array();
+        $result = [];
         foreach ($data as $key => $val) {
-            $result[$key] = is_array($val)
-                ? array_map_recursive($func, $val)
-                : call($func, [$val]);
+            $result[$key] = is_array($val) ? array_map_recursive($func, $val) : call($func, [$val]);
         }
 
         return $result;
