@@ -44,9 +44,11 @@ return [
     // enable false 将不会生成 swagger 文件
     'enable' => env('APP_ENV') !== 'production',
     // swagger 配置的输出文件
+    // 当你有多个 http server 时, 可以在输出文件的名称中增加 {server} 字面变量
+    // 比如 /public/swagger/swagger_{server}.json
     'output_file' => BASE_PATH . '/public/swagger/swagger.json',
     // 忽略的hook, 非必须 用于忽略符合条件的接口, 将不会输出到上定义的文件中
-    'ignore' => function($controller, $action) {
+    'ignore' => function ($controller, $action) {
         return false;
     },
     // 自定义验证器错误码、错误描述字段
@@ -54,6 +56,7 @@ return [
     'http_status_code' => 400,
     'field_error_code' => 'code',
     'field_error_message' => 'message',
+    'exception_enable' => false,
     // swagger 的基础配置
     'swagger' => [
         'swagger' => '2.0',
@@ -62,8 +65,28 @@ return [
             'version' => '1.0.0',
             'title' => 'HYPERF API DOC',
         ],
-        'host' => 'apidog.com',
+        'host' => 'apidog.cc',
         'schemes' => ['http'],
+    ],
+    'templates' => [
+        // {template} 字面变量  替换 schema 内容
+//        // 默认 成功 返回
+//        'success' => [
+//            "code|code"    => '0',
+//            "result"  => '{template}',
+//            "message|message" => 'Success',
+//        ],
+//        // 分页
+//        'page' => [
+//            "code|code"    => '0',
+//            "result"  => [
+//                'pageSize' => 10,
+//                'total' => 1,
+//                'totalPage' => 1,
+//                'list' => '{template}'
+//            ],
+//            "message|message" => 'Success',
+//        ],
     ],
 ];
 ```
@@ -147,48 +170,53 @@ use Hyperf\Utils\ApplicationContext;
 
 /**
  * @ApiVersion(version="v1")
- * @ApiController(tag="用户管理", description="用户的新增/修改/删除接口")
+ * @ApiController(tag="demo管理", description="demo的新增/修改/删除接口")
  * @ApiDefinitions({
- *  @ApiDefinition(name="UserOkResponse", properties={
+ *  @ApiDefinition(name="DemoOkResponse", properties={
  *     "code|响应码": 200,
  *     "msg|响应信息": "ok",
- *     "data|响应数据": {"$ref": "UserInfoData"}
+ *     "data|响应数据": {"$ref": "DemoInfoData"}
  *  }),
- *  @ApiDefinition(name="UserInfoData", properties={
- *     "userInfo|用户数据": {"$ref": "UserInfoDetail"}
+ *  @ApiDefinition(name="DemoInfoData", properties={
+ *     "userInfo|用户数据": {"$ref": "DemoInfoDetail"}
  *  }),
- *  @ApiDefinition(name="UserInfoDetail", properties={
+ *  @ApiDefinition(name="DemoInfoDetail", properties={
  *     "id|用户ID": 1,
  *     "mobile|用户手机号": { "default": "13545321231", "type": "string" },
  *     "nickname|用户昵称": "nickname",
  *     "avatar": { "default": "avatar", "type": "string", "description": "用户头像" },
  *  })
  * })
+ *
+ * @RouterAuthAnnotation(isPublic=true)
  */
-class UserController extends AbstractController
+class DemoController extends AuthController
 {
+
     /**
-     * @Author 刀刀
-     * @PostApi(path="/user", description="添加一个用户")
+     * @PostApi(path="/demo", description="添加一个用户")
      * @Header(key="token|接口访问凭证", rule="required")
-     * @FormData(key="name|名称", rule="required|max:10|cb_checkName")
-     * @FormData(key="sex|年龄", rule="integer|in:0,1")
+     * @FormData(key="a.name|名称", rule="required|max:10|cb_checkName")
+     * @FormData(key="a.sex|年龄", rule="integer|in:0,1")
+     * @FormData(key="aa|aa", rule="required|array")
      * @FormData(key="file|文件", rule="file")
-     * @ApiResponse(code="-1", description="参数错误")
-     * @ApiResponse(code="0", description="创建成功", schema={"id":1})
+     * @ApiResponse(code="-1", description="参数错误", template="page")
+     * @ApiResponse(code="0", description="请求成功", schema={"id":"1"})
+     *
      */
     public function add()
     {
         return [
-            'code' => 0,
-            'id' => 1,
+            'code'   => 0,
+            'id'     => 1,
+            'params' => $this->request->post(),
         ];
     }
 
     // 自定义的校验方法 rule 中 cb_*** 方式调用
     public function checkName($attribute, $value)
     {
-        if (in_black_list($value)) {
+        if ($value === 'a') {
             return "拒绝添加 " . $value;
         }
 
@@ -197,7 +225,7 @@ class UserController extends AbstractController
 
     /**
      * 请注意 body 类型 rules 为数组类型
-     * @DeleteApi(path="/user", description="删除用户")
+     * @DeleteApi(path="/demo", description="删除用户")
      * @Body(rules={
      *     "id|用户id":"required|integer|max:10",
      *     "deepAssoc|深层关联":{
@@ -205,60 +233,60 @@ class UserController extends AbstractController
      *     },
      *     "deepUassoc|深层索引":{{
      *         "name_2|名称": "required|integer|max:20"
-     *     }}
+     *     }},
+     *     "a.b.c.*.e|aa":"required|integer|max:10",
      * })
      * @ApiResponse(code="-1", description="参数错误")
      * @ApiResponse(code="0", description="删除成功", schema={"id":1})
      */
     public function delete()
     {
-        $request = ApplicationContext::getContainer()->get(RequestInterface::class);
-        $body = $request->getBody()->getContents();
+        $body = $this->request->getBody()->getContents();
         return [
-            'code' => 0,
-            'query' => $request->getQueryParams(),
-            'body' => json_decode($body, true),
+            'code'  => 0,
+            'query' => $this->request->getQueryParams(),
+            'body'  => json_decode($body, true),
         ];
     }
 
     /**
-     * @GetApi(path="/user", description="获取用户详情")
+     * @GetApi(path="/demo", description="获取用户详情")
      * @Query(key="id", rule="required|integer|max:0")
      * @ApiResponse(code="-1", description="参数错误")
-     * @ApiResponse(code="0", schema={"id":1,"name":"张三","age":1})
+     * @ApiResponse(code="0", schema={"id":1,"name":"张三","age":1}, template="success")
      */
     public function get()
     {
         return [
             'code' => 0,
-            'id' => 1,
+            'id'   => 1,
             'name' => '张三',
-            'age' => 1,
+            'age'  => 1,
         ];
     }
 
     /**
      * schema中可以指定$ref属性引用定义好的definition
-     * @GetApi(path="/user/info", description="获取用户详情")
+     * @GetApi(path="/demo/info", description="获取用户详情")
      * @Query(key="id", rule="required|integer|max:0")
      * @ApiResponse(code="-1", description="参数错误")
-     * @ApiResponse(code="0", schema={"$ref": "UserOkResponse"})
+     * @ApiResponse(code="0", schema={"$ref": "DemoOkResponse"})
      */
     public function info()
     {
         return [
             'code' => 0,
-            'id' => 1,
+            'id'   => 1,
             'name' => '张三',
-            'age' => 1,
+            'age'  => 1,
         ];
     }
 
     /**
-     * @GetApi(path="/users", summary="用户列表")
+     * @GetApi(path="/demos", summary="用户列表")
      * @ApiResponse(code="200", description="ok", schema={{
      *     "a|aa": {{
-     *          "a|aaa":"b","c|ccc":"d"
+     *          "a|aaa":"b","c|ccc":5.2
      *      }},
      *     "b|ids": {1,2,3},
      *     "c|strings": {"a","b","c"},
@@ -271,7 +299,7 @@ class UserController extends AbstractController
         return [
             [
                 "a" => [
-                    ["a" => "b", "c" => "d"]
+                    ["a" => "b", "c" => "d"],
                 ],
                 "b" => [1, 2, 3],
                 "c" => ["a", "b", "c"],
@@ -283,6 +311,7 @@ class UserController extends AbstractController
             ],
         ];
     }
+
 }
 ```
 
@@ -312,6 +341,15 @@ php bin/hyperf.php apidog:ui --port 8888
 ![AOFVzI](https://gitee.com/daodao97/asset/raw/master/imgs/AOFVzI.jpg)
 
 ## 更新日志
+- 20201111 [@ice](https://github.com/ice-leng)
+  - 修复 初始化 swagger.json  文件生成
+  - 修复 definition 在swagger ui 正确显示 定义数据类型
+  - 添加 注解 Header ，Query 支持 类 注解
+  - 添加 FormData 注解 key 参数 支持 a.b 验证 swagger ui 支持
+  - 添加 Body 注解 支持 参数 a.b  和 a.*.b 验证 swagger ui 支持
+  - 修复 definition 返回 参数为 小数在 swagger ui 不显示问题
+  - 添加 异常 ApiDogException 抛出，以及配置 异常抛出开关
+  - 添加 返回数据 模版 
 - 20201014
     - 优化swagger ui, 命令模式监听`0.0.0.0`, 并支持自定义端口
 - 20200911
