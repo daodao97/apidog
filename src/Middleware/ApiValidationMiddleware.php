@@ -13,6 +13,8 @@ use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Hyperf\Contract\ConfigInterface;
+use Hyperf\Apidog\Exception\ApiDogException;
 
 class ApiValidationMiddleware extends CoreMiddleware
 {
@@ -27,11 +29,6 @@ class ApiValidationMiddleware extends CoreMiddleware
     protected $response;
 
     protected $validationApi;
-
-    /**
-     * @Value("apidog.http_status_code")
-     */
-    private $httpStatusCode;
 
     public function __construct(ContainerInterface $container, HttpResponse $response, RequestInterface $request, ValidationApi $validation)
     {
@@ -59,7 +56,14 @@ class ApiValidationMiddleware extends CoreMiddleware
 
         $result = $this->validationApi->validated($controller, $action);
         if ($result !== true) {
-            return $this->response->json($result)->withStatus($this->httpStatusCode);
+            $config = $this->container->get(ConfigInterface::class);
+            $exceptionEnable = $config->get('apidog.exception_enable', false);
+            if ($exceptionEnable) {
+                $fieldErrorMessage = $config->get('apidog.field_error_message', 'message');
+                throw new ApiDogException($result[$fieldErrorMessage]);
+            }
+            $httpStatusCode = $config->get('apidog.http_status_code', 400);
+            return $this->response->json($result)->withStatus($httpStatusCode);
         }
 
         return $handler->handle($request);
