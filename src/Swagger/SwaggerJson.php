@@ -115,7 +115,7 @@ class SwaggerJson
         $prefix = $controlerAnno->prefix;
         $tokens = [$versionAnno ? $versionAnno->version : null, $prefix, $path];
         $tokens = array_map(function ($item) {
-            return Str::replaceFirst('/', '', $item);
+            return ltrim($item, '/');
         }, array_filter($tokens));
         $path = '/' . implode('/', $tokens);
 

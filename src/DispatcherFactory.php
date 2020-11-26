@@ -39,7 +39,7 @@ class DispatcherFactory extends HyperfDispatcherFactory
 
                 $tokens = [$version ? $version->version : null, $annotation->prefix, $mapping->path];
                 $tokens = array_map(function ($item) {
-                    return Str::replaceFirst('/', '', $item);
+                    return ltrim($item, '/');
                 }, array_filter($tokens));
                 $path = '/' . implode('/', $tokens);
 
