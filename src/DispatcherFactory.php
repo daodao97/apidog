@@ -8,6 +8,7 @@ use Hyperf\Di\Annotation\AnnotationCollector;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\Mapping;
 use Hyperf\HttpServer\Router\DispatcherFactory as HyperfDispatcherFactory;
+use Hyperf\Utils\Str;
 
 class DispatcherFactory extends HyperfDispatcherFactory
 {
@@ -16,7 +17,6 @@ class DispatcherFactory extends HyperfDispatcherFactory
         if (!$methodMetadata) {
             return;
         }
-        $prefix = $this->getPrefix($className, $annotation->prefix);
         $router = $this->getRouter($annotation->server);
 
         /** @var ApiVersion $version */
@@ -37,16 +37,11 @@ class DispatcherFactory extends HyperfDispatcherFactory
                     continue;
                 }
 
-                $path = $mapping->path;
-
-                if ($path === '') {
-                    $path = $prefix;
-                } elseif ($path[0] !== '/') {
-                    $path = $prefix . '/' . $path;
-                }
-                if ($version && $version->version) {
-                    $path = '/' . $version->version . $path;
-                }
+                $tokens = [$version ? $version->version : null, $annotation->prefix, $mapping->path];
+                $tokens = array_map(function ($item) {
+                    return Str::replaceFirst('/', '', $item);
+                }, array_filter($tokens));
+                $path = '/' . implode('/', $tokens);
 
                 $router->addRoute($mapping->methods, $path, [$className, $methodName], [
                     'middleware' => $methodMiddlewares,

@@ -21,6 +21,7 @@ use Hyperf\HttpServer\Annotation\Mapping;
 use Hyperf\Logger\LoggerFactory;
 use Hyperf\Utils\ApplicationContext;
 use Hyperf\Utils\Arr;
+use Hyperf\Utils\Str;
 
 class SwaggerJson
 {
@@ -112,14 +113,11 @@ class SwaggerJson
 
         $path = $mapping->path;
         $prefix = $controlerAnno->prefix;
-        if ($path === '') {
-            $path = $prefix;
-        } elseif ($path[0] !== '/') {
-            $path = $prefix . '/' . $path;
-        }
-        if ($versionAnno && $versionAnno->version) {
-            $path = '/' . $versionAnno->version . $path;
-        }
+        $tokens = [$versionAnno ? $versionAnno->version : null, $prefix, $path];
+        $tokens = array_map(function ($item) {
+            return Str::replaceFirst('/', '', $item);
+        }, array_filter($tokens));
+        $path = '/' . implode('/', $tokens);
 
         $method = strtolower($mapping->methods[0]);
         $this->swagger['paths'][$path][$method] = [
