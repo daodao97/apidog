@@ -35,13 +35,13 @@ class BootAppConfListener implements ListenerInterface
             $logger->error('/config/autoload/apidog.php need set output_file');
             return;
         }
-        $router = $container->get(DispatcherFactory::class)->getRouter('http');
-        $data = $router->getData();
         $servers = $config->get('server.servers');
         if (count($servers) > 1 && !Str::contains($output, '{server}')) {
             $logger->warning('You have multiple serve, but your apidog.output_file not contains {server} var');
         }
         foreach ($servers as $server) {
+            $router = $container->get(DispatcherFactory::class)->getRouter($server['name']);
+            $data = $router->getData();
             $swagger = new SwaggerJson($server['name']);
 
             $ignore = $config->get('apidog.ignore', function ($controller, $action) {
