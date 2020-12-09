@@ -39,6 +39,7 @@
         "friendsofphp/php-cs-fixer": "^2.17"
     },
     "scripts": {
-        "cs-fix": "php-cs-fixer fix $1"
+        "cs-fix": "php-cs-fixer fix $1",
+        "cs-check": "php-cs-fixer fix $1 --dry-run"
     }
 }
