@@ -36,10 +36,11 @@
         }
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^2.17"
+        "friendsofphp/php-cs-fixer": "^2.17",
+        "phpstan/phpstan": "^0.12"
     },
     "scripts": {
         "cs-fix": "php-cs-fixer fix $1",
-        "cs-check": "php-cs-fixer fix $1 --dry-run"
+        "analyse": "phpstan analyse --memory-limit 1024M -l 0 ./src"
     }
 }
