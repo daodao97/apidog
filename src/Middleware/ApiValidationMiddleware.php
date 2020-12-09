@@ -29,13 +29,13 @@ class ApiValidationMiddleware extends CoreMiddleware
 
     protected $validationApi;
 
-    public function __construct(ContainerInterface $container, HttpResponse $response, RequestInterface $request, ValidationApi $validation)
+    public function __construct(ContainerInterface $container, HttpResponse $response, RequestInterface $request, ValidationApi $validation, string $server = 'http')
     {
         $this->container = $container;
         $this->response = $response;
         $this->request = $request;
         $this->validationApi = $validation;
-        parent::__construct($container, 'http');
+        parent::__construct($container, $server);
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
