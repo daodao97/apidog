@@ -10,6 +10,7 @@ use Hyperf\Contract\ConfigInterface;
 use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\HttpServer\Contract\ResponseInterface as HttpResponse;
 use Hyperf\HttpServer\CoreMiddleware;
+use Hyperf\HttpServer\Router\Dispatched;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -41,17 +42,17 @@ class ApiValidationMiddleware extends CoreMiddleware
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $uri = $request->getUri();
-        $routes = $this->dispatcher->dispatch($request->getMethod(), $uri->getPath());
-        if ($routes[0] !== Dispatcher::FOUND) {
+        /** @var Dispatched $dispatched */
+        $dispatched = $request->getAttribute(Dispatched::class);
+        if($dispatched->status !== Dispatcher::FOUND){
             return $handler->handle($request);
         }
 
-        // do not check Closure
-        if ($routes[1]->callback instanceof \Closure) {
+        if($dispatched->handler->callback instanceof \Closure){
             return $handler->handle($request);
         }
 
-        [$controller, $action] = $this->prepareHandler($routes[1]->callback);
+        [$controller, $action] = $this->prepareHandler($dispatched->handler->callback);
 
         $result = $this->validationApi->validated($controller, $action);
         if ($result !== true) {
