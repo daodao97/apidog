@@ -1,7 +1,15 @@
 <?php
-declare(strict_types=1);
 
-if (!function_exists('array_map_recursive')) {
+declare(strict_types=1);
+/**
+ * This file is part of Hyperf.
+ *
+ * @link     https://www.hyperf.io
+ * @document https://hyperf.wiki
+ * @contact  group@hyperf.io
+ * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
+ */
+if (! function_exists('array_map_recursive')) {
     function array_map_recursive(callable $func, array $data)
     {
         $result = [];
@@ -13,7 +21,7 @@ if (!function_exists('array_map_recursive')) {
     }
 }
 
-if (!function_exists('array_sort_by_value_length')) {
+if (! function_exists('array_sort_by_value_length')) {
     function array_sort_by_value_length($arr, $sort_order = SORT_DESC)
     {
         $keys = array_map('strlen', $arr);
@@ -22,7 +30,7 @@ if (!function_exists('array_sort_by_value_length')) {
     }
 }
 
-if (!function_exists('array_sort_by_key_length')) {
+if (! function_exists('array_sort_by_key_length')) {
     function array_sort_by_key_length($arr, $sort_order = SORT_DESC)
     {
         $keys = array_map('strlen', array_keys($arr));

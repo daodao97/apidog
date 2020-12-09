@@ -1,6 +1,14 @@
 <?php
-declare(strict_types=1);
 
+declare(strict_types=1);
+/**
+ * This file is part of Hyperf.
+ *
+ * @link     https://www.hyperf.io
+ * @document https://hyperf.wiki
+ * @contact  group@hyperf.io
+ * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
+ */
 namespace Hyperf\Apidog\Swagger;
 
 use Doctrine\Common\Annotations\AnnotationReader;
@@ -21,7 +29,6 @@ use Hyperf\HttpServer\Annotation\Mapping;
 use Hyperf\Logger\LoggerFactory;
 use Hyperf\Utils\ApplicationContext;
 use Hyperf\Utils\Arr;
-use Hyperf\Utils\Str;
 
 class SwaggerJson
 {
@@ -58,7 +65,7 @@ class SwaggerJson
 
         $servers = $this->config->get('server.servers');
         $servers_name = array_column($servers, 'name');
-        if (!in_array($bindServer, $servers_name)) {
+        if (! in_array($bindServer, $servers_name)) {
             throw new \Exception(sprintf('The bind ApiServer name [%s] not found, defined in %s!', $bindServer, $className));
         }
 
@@ -77,7 +84,7 @@ class SwaggerJson
             $methodAnnotations[] = $queryAnnotation;
         }
 
-        if (!$controlerAnno || !$methodAnnotations) {
+        if (! $controlerAnno || ! $methodAnnotations) {
             return;
         }
         $params = [];
@@ -127,96 +134,13 @@ class SwaggerJson
             'operationId' => implode('', array_map('ucfirst', explode('/', $path))) . $mapping->methods[0],
             'parameters' => $this->makeParameters($params, $path, $method),
             'produces' => [
-                "application/json",
+                'application/json',
             ],
             'responses' => $this->makeResponses($responses, $path, $method),
         ];
         if ($consumes !== null) {
             $this->swagger['paths'][$path][$method]['consumes'] = [$consumes];
         }
-    }
-
-    private function initModel()
-    {
-        $arraySchema = [
-            'type' => 'array',
-            'required' => [],
-            'items' => [
-                'type' => 'string',
-            ],
-        ];
-        $objectSchema = [
-            'type' => 'object',
-            'required' => [],
-            'items' => [
-                'type' => 'string',
-            ],
-        ];
-
-        $this->swagger['definitions']['ModelArray'] = $arraySchema;
-        $this->swagger['definitions']['ModelObject'] = $objectSchema;
-    }
-
-    private function rules2schema($name, $rules)
-    {
-        $schema = [
-            'type' => 'object',
-            'properties' => [],
-        ];
-        foreach ($rules as $field => $rule) {
-            $type = null;
-            $property = [];
-
-            $fieldNameLabel = explode('|', $field);
-            $fieldName = $fieldNameLabel[0];
-            if (strpos($fieldName, '.')) {
-                $fieldNames = explode('.', $fieldName);
-                $fieldName = array_shift($fieldNames);
-                $endName = array_pop($fieldNames);
-                $fieldNames = array_reverse($fieldNames);
-                $newRules = '{"' . $endName . '|' . $fieldNameLabel[1] . '":"' . $rule . '"}';
-                foreach ($fieldNames as $v) {
-                    if ($v === '*') {
-                        $newRules = '[' . $newRules . ']';
-                    } else {
-                        $newRules = '{"' . $v . '":' . $newRules . '}';
-                    }
-                }
-                $rule = json_decode($newRules, true);
-            }
-            if (is_array($rule)) {
-                $deepModelName = $name . ucfirst($fieldName);
-                if (Arr::isAssoc($rule)) {
-                    $this->rules2schema($deepModelName, $rule);
-                    $property['$ref'] = '#/definitions/' . $deepModelName;
-                } else {
-                    $type = 'array';
-                    $this->rules2schema($deepModelName, $rule[0]);
-                    $property['items']['$ref'] = '#/definitions/' . $deepModelName;
-                }
-            } else {
-                $type = $this->getTypeByRule($rule);
-                if ($type === 'string') {
-                    in_array('required', explode('|', $rule)) && $schema['required'][] = $fieldName;
-                }
-                if ($type == 'array') {
-                    $property['$ref'] = '#/definitions/ModelArray';
-                }
-                if ($type == 'object') {
-                    $property['$ref'] = '#/definitions/ModelObject';
-                }
-            }
-            if ($type !== null) {
-                $property['type'] = $type;
-                if (!in_array($type, ['array', 'object'])) {
-                    $property['example'] = $type;
-                }
-            }
-            $property['description'] = $fieldNameLabel[1] ?? '';
-
-            $schema['properties'][$fieldName] = $property;
-        }
-        $this->swagger['definitions'][$name] = $schema;
     }
 
     public function getTypeByRule($rule)
@@ -295,7 +219,7 @@ class SwaggerJson
             ];
             if ($item->template && Arr::get($templates, $item->template)) {
                 $json = json_encode($templates[$item->template]);
-                if (!$item->schema) {
+                if (! $item->schema) {
                     $item->schema = [];
                 }
                 $template = str_replace('"{template}"', json_encode($item->schema), $json);
@@ -308,15 +232,15 @@ class SwaggerJson
                 }
 
                 // 处理直接返回列表的情况 List<Integer> List<String>
-                if (isset($item->schema[0]) && !is_array($item->schema[0])) {
+                if (isset($item->schema[0]) && ! is_array($item->schema[0])) {
                     $resp[$item->code]['schema']['type'] = 'array';
                     if (is_int($item->schema[0])) {
                         $resp[$item->code]['schema']['items'] = [
-                            "type" => 'integer',
+                            'type' => 'integer',
                         ];
                     } elseif (is_string($item->schema[0])) {
                         $resp[$item->code]['schema']['items'] = [
-                            "type" => 'string',
+                            'type' => 'string',
                         ];
                     }
                     continue;
@@ -341,14 +265,14 @@ class SwaggerJson
 
     public function makeDefinition($definitions)
     {
-        if (!$definitions) {
+        if (! $definitions) {
             return;
         }
         if ($definitions instanceof ApiDefinitions) {
             $definitions = $definitions->definitions;
         }
         foreach ($definitions as $definition) {
-            /** @var $definition ApiDefinition */
+            /** @var ApiDefinition $definition */
             $defName = $definition->name;
             $defProps = $definition->properties;
 
@@ -374,7 +298,7 @@ class SwaggerJson
                         if (in_array($type, ['double', 'float'])) {
                             $type = 'number';
                         }
-                        !isset($propVal['type']) && $propVal['type'] = $type;
+                        ! isset($propVal['type']) && $propVal['type'] = $type;
                         $propVal['example'] = $propVal['type'] === 'number' ? 'float' : $propVal['type'];
                     }
                     if (isset($prop['$ref'])) {
@@ -397,7 +321,7 @@ class SwaggerJson
 
     public function responseSchemaToDefinition($schema, $modelName, $level = 0)
     {
-        if (!$schema) {
+        if (! $schema) {
             return false;
         }
         $definition = [];
@@ -462,7 +386,7 @@ class SwaggerJson
     public function putFile(string $file, string $content)
     {
         $pathInfo = pathinfo($file);
-        if (!empty($pathInfo['dirname'])) {
+        if (! empty($pathInfo['dirname'])) {
             if (file_exists($pathInfo['dirname']) === false) {
                 if (mkdir($pathInfo['dirname'], 0644, true) === false) {
                     return false;
@@ -476,12 +400,95 @@ class SwaggerJson
     {
         $this->swagger['tags'] = array_values($this->swagger['tags'] ?? []);
         $outputFile = $this->config->get('apidog.output_file');
-        if (!$outputFile) {
+        if (! $outputFile) {
             $this->logger->error('/config/autoload/apidog.php need set output_file');
             return;
         }
         $outputFile = str_replace('{server}', $this->server, $outputFile);
         $this->putFile($outputFile, json_encode($this->swagger, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         $this->logger->debug('Generate swagger.json success!');
+    }
+
+    private function initModel()
+    {
+        $arraySchema = [
+            'type' => 'array',
+            'required' => [],
+            'items' => [
+                'type' => 'string',
+            ],
+        ];
+        $objectSchema = [
+            'type' => 'object',
+            'required' => [],
+            'items' => [
+                'type' => 'string',
+            ],
+        ];
+
+        $this->swagger['definitions']['ModelArray'] = $arraySchema;
+        $this->swagger['definitions']['ModelObject'] = $objectSchema;
+    }
+
+    private function rules2schema($name, $rules)
+    {
+        $schema = [
+            'type' => 'object',
+            'properties' => [],
+        ];
+        foreach ($rules as $field => $rule) {
+            $type = null;
+            $property = [];
+
+            $fieldNameLabel = explode('|', $field);
+            $fieldName = $fieldNameLabel[0];
+            if (strpos($fieldName, '.')) {
+                $fieldNames = explode('.', $fieldName);
+                $fieldName = array_shift($fieldNames);
+                $endName = array_pop($fieldNames);
+                $fieldNames = array_reverse($fieldNames);
+                $newRules = '{"' . $endName . '|' . $fieldNameLabel[1] . '":"' . $rule . '"}';
+                foreach ($fieldNames as $v) {
+                    if ($v === '*') {
+                        $newRules = '[' . $newRules . ']';
+                    } else {
+                        $newRules = '{"' . $v . '":' . $newRules . '}';
+                    }
+                }
+                $rule = json_decode($newRules, true);
+            }
+            if (is_array($rule)) {
+                $deepModelName = $name . ucfirst($fieldName);
+                if (Arr::isAssoc($rule)) {
+                    $this->rules2schema($deepModelName, $rule);
+                    $property['$ref'] = '#/definitions/' . $deepModelName;
+                } else {
+                    $type = 'array';
+                    $this->rules2schema($deepModelName, $rule[0]);
+                    $property['items']['$ref'] = '#/definitions/' . $deepModelName;
+                }
+            } else {
+                $type = $this->getTypeByRule($rule);
+                if ($type === 'string') {
+                    in_array('required', explode('|', $rule)) && $schema['required'][] = $fieldName;
+                }
+                if ($type == 'array') {
+                    $property['$ref'] = '#/definitions/ModelArray';
+                }
+                if ($type == 'object') {
+                    $property['$ref'] = '#/definitions/ModelObject';
+                }
+            }
+            if ($type !== null) {
+                $property['type'] = $type;
+                if (! in_array($type, ['array', 'object'])) {
+                    $property['example'] = $type;
+                }
+            }
+            $property['description'] = $fieldNameLabel[1] ?? '';
+
+            $schema['properties'][$fieldName] = $property;
+        }
+        $this->swagger['definitions'][$name] = $schema;
     }
 }
