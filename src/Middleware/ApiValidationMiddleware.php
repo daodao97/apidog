@@ -41,13 +41,13 @@ class ApiValidationMiddleware extends CoreMiddleware
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $uri = $request->getUri();
         /** @var Dispatched $dispatched */
         $dispatched = $request->getAttribute(Dispatched::class);
         if($dispatched->status !== Dispatcher::FOUND){
             return $handler->handle($request);
         }
 
+        // do not check Closure
         if($dispatched->handler->callback instanceof \Closure){
             return $handler->handle($request);
         }
