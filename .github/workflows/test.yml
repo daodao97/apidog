@@ -14,7 +14,8 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         php-version: ['7.2', '7.3', '7.4']
-        engine: ['none', 'swoole', 'swow']
+#        engine: ['none', 'swoole', 'swow']
+        engine: ['swoole']
       max-parallel: 5
     steps:
       - name: Checkout
