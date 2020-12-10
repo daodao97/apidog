@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+/**
+ * This file is part of Hyperf.
+ *
+ * @link     https://www.hyperf.io
+ * @document https://hyperf.wiki
+ * @contact  group@hyperf.io
+ * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
+ */
 return [
     // enable false 将不会生成 swagger 文件
     'enable' => env('APP_ENV') !== 'production',
@@ -29,23 +38,23 @@ return [
         'schemes' => ['http'],
     ],
     'templates' => [
-        // {template} 字面变量  替换 schema 内容
-//        // 默认 成功 返回
-//        'success' => [
-//            "code|code"    => '0',
-//            "result"  => '{template}',
-//            "message|message" => 'Success',
-//        ],
-//        // 分页
-//        'page' => [
-//            "code|code"    => '0',
-//            "result"  => [
-//                'pageSize' => 10,
-//                'total' => 1,
-//                'totalPage' => 1,
-//                'list' => '{template}'
-//            ],
-//            "message|message" => 'Success',
-//        ],
+        // // {template} 字面变量  替换 schema 内容
+        // // 默认 成功 返回
+        // 'success' => [
+        //     "code|code" => '0',
+        //     "result" => '{template}',
+        //     "message|message" => 'Success',
+        // ],
+        // // 分页
+        // 'page' => [
+        //     "code|code" => '0',
+        //     "result" => [
+        //         'pageSize' => 10,
+        //         'total' => 1,
+        //         'totalPage' => 1,
+        //         'list' => '{template}'
+        //     ],
+        //     "message|message" => 'Success',
+        // ],
     ],
 ];

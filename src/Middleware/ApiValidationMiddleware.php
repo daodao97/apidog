@@ -1,6 +1,14 @@
 <?php
-declare(strict_types=1);
 
+declare(strict_types=1);
+/**
+ * This file is part of Hyperf.
+ *
+ * @link     https://www.hyperf.io
+ * @document https://hyperf.wiki
+ * @contact  group@hyperf.io
+ * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
+ */
 namespace Hyperf\Apidog\Middleware;
 
 use FastRoute\Dispatcher;
@@ -43,12 +51,12 @@ class ApiValidationMiddleware extends CoreMiddleware
     {
         /** @var Dispatched $dispatched */
         $dispatched = $request->getAttribute(Dispatched::class);
-        if($dispatched->status !== Dispatcher::FOUND){
+        if ($dispatched->status !== Dispatcher::FOUND) {
             return $handler->handle($request);
         }
 
         // do not check Closure
-        if($dispatched->handler->callback instanceof \Closure){
+        if ($dispatched->handler->callback instanceof \Closure) {
             return $handler->handle($request);
         }
 

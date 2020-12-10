@@ -1,5 +1,14 @@
 <?php
 
+declare(strict_types=1);
+/**
+ * This file is part of Hyperf.
+ *
+ * @link     https://www.hyperf.io
+ * @document https://hyperf.wiki
+ * @contact  group@hyperf.io
+ * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
+ */
 namespace Hyperf\Apidog\Validation;
 
 use Hyperf\Apidog\Annotation\Body;
@@ -47,7 +56,7 @@ class ValidationApi
             }
         }
 
-        if (!array_filter(compact('header_rules', 'query_rules', 'body_rules', 'form_data_rules'))) {
+        if (! array_filter(compact('header_rules', 'query_rules', 'body_rules', 'form_data_rules'))) {
             return true;
         }
 
@@ -91,7 +100,7 @@ class ValidationApi
             [
                 $data,
                 $error,
-            ] = $this->check($body_rules, (array)json_decode($request->getBody()->getContents(), true), $controllerInstance);
+            ] = $this->check($body_rules, (array) json_decode($request->getBody()->getContents(), true), $controllerInstance);
             if ($data === null) {
                 return [
                     $field_error_code => $error_code,

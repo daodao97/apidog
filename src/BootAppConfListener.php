@@ -1,5 +1,14 @@
 <?php
+
 declare(strict_types=1);
+/**
+ * This file is part of Hyperf.
+ *
+ * @link     https://www.hyperf.io
+ * @document https://hyperf.wiki
+ * @contact  group@hyperf.io
+ * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
+ */
 namespace Hyperf\Apidog;
 
 use Hyperf\Apidog\Swagger\SwaggerJson;
@@ -26,17 +35,17 @@ class BootAppConfListener implements ListenerInterface
         $container = ApplicationContext::getContainer();
         $logger = $container->get(LoggerFactory::class)->get('apidog');
         $config = $container->get(ConfigInterface::class);
-        if (!$config->get('apidog.enable')) {
+        if (! $config->get('apidog.enable')) {
             $logger->debug('apidog not enable');
             return;
         }
         $output = $config->get('apidog.output_file');
-        if (!$output) {
+        if (! $output) {
             $logger->error('/config/autoload/apidog.php need set output_file');
             return;
         }
         $servers = $config->get('server.servers');
-        if (count($servers) > 1 && !Str::contains($output, '{server}')) {
+        if (count($servers) > 1 && ! Str::contains($output, '{server}')) {
             $logger->warning('You have multiple serve, but your apidog.output_file not contains {server} var');
         }
         foreach ($servers as $server) {
@@ -49,9 +58,9 @@ class BootAppConfListener implements ListenerInterface
             });
 
             array_walk_recursive($data, function ($item) use ($swagger, $ignore) {
-                if ($item instanceof Handler && !($item->callback instanceof \Closure)) {
+                if ($item instanceof Handler && ! ($item->callback instanceof \Closure)) {
                     [$controller, $action] = $this->prepareHandler($item->callback);
-                    (!$ignore($controller, $action)) && $swagger->addPath($controller, $action);
+                    (! $ignore($controller, $action)) && $swagger->addPath($controller, $action);
                 }
             });
 
