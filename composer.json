@@ -42,9 +42,9 @@
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^2.17",
-        "mockery/mockery": "^1.4",
+        "mockery/mockery": "^1.0",
         "phpstan/phpstan": "^0.12",
-        "phpunit/phpunit": ">=8.15"
+        "phpunit/phpunit": ">=8.5"
     },
     "scripts": {
         "cs-fix": "php-cs-fixer fix $1",
