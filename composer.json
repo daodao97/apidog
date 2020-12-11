@@ -25,6 +25,11 @@
             "./src/function.php"
         ]
     },
+    "autoload-dev": {
+        "psr-4": {
+            "HyperfTest\\Apidog\\": "tests/"
+        }
+    },
     "minimum-stability": "dev",
     "prefer-stable": true,
     "config": {
@@ -37,10 +42,13 @@
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^2.17",
-        "phpstan/phpstan": "^0.12"
+        "mockery/mockery": "^1.4",
+        "phpstan/phpstan": "^0.12",
+        "phpunit/phpunit": ">=8.15"
     },
     "scripts": {
         "cs-fix": "php-cs-fixer fix $1",
+        "test": "phpunit -c phpunit.xml --colors=always",
         "analyse": "phpstan analyse --memory-limit 1024M -l 0 ./src"
     }
 }
