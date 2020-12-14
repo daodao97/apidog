@@ -114,7 +114,7 @@ class ValidationApi
             [
                 $data,
                 $error,
-            ] = $this->check($form_data_rules, $request->getParsedBody(), $controllerInstance);
+            ] = $this->check($form_data_rules, array_merge($request->getUploadedFiles(),$request->getParsedBody()), $controllerInstance);
             if ($data === null) {
                 return [
                     $field_error_code => $error_code,
