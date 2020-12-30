@@ -19,6 +19,7 @@ use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\HttpServer\Contract\ResponseInterface as HttpResponse;
 use Hyperf\HttpServer\CoreMiddleware;
 use Hyperf\HttpServer\Router\Dispatched;
+use Hyperf\HttpServer\Server;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -38,13 +39,12 @@ class ApiValidationMiddleware extends CoreMiddleware
 
     protected $validationApi;
 
-    public function __construct(ContainerInterface $container, HttpResponse $response, RequestInterface $request, ValidationApi $validation)
+    public function __construct(ContainerInterface $container, HttpResponse $response, RequestInterface $request, ValidationApi $validation, Server $server)
     {
-        $this->container = $container;
         $this->response = $response;
         $this->request = $request;
         $this->validationApi = $validation;
-        parent::__construct($container, 'http');
+        parent::__construct($container, $server->getServerName());
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface

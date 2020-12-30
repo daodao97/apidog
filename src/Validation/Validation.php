@@ -102,7 +102,7 @@ class Validation
             $map[$field] = $title;
         }
 
-        $validator = $this->factory->make($data, $real_rules);
+        $validator = $this->factory->make($data, $real_rules, [], $map);
 
         $verifier = $this->container->get(PresenceVerifierInterface::class);
         $validator->setPresenceVerifier($verifier);
@@ -111,25 +111,6 @@ class Validation
         $errors = [];
         if ($fails) {
             $errors = $validator->errors()->all();
-            foreach ($errors as &$item) {
-                $filed_keys = array_keys($map);
-                $filed_keys = array_sort_by_value_length($filed_keys);
-                $replace = [];
-                foreach ($filed_keys as $k) {
-                    $replace[] = $map[$k];
-                }
-                $map = array_sort_by_key_length($map);
-                $filed_keys = array_map(function ($key) {
-                    if (strpos($key, '.') === false) {
-                        return str_replace('_', ' ', $key);
-                    }
-                    return $key;
-                }, $filed_keys);
-
-                $item = str_replace($filed_keys, $replace, $item);
-                $item = str_replace('字段', '', $item);
-                unset($item);
-            }
 
             return [
                 null,

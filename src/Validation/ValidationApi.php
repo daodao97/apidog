@@ -70,10 +70,14 @@ class ValidationApi
             $headers = array_map(function ($item) {
                 return $item[0];
             }, $headers);
+            $real_headers = [];
+            foreach ($headers as $key => $val) {
+                $real_headers[implode('-', array_map('ucfirst', explode('-', $key)))] = $val;
+            }
             [
                 $data,
                 $error,
-            ] = $this->check($header_rules, $headers, $controllerInstance);
+            ] = $this->check($header_rules, $real_headers, $controllerInstance);
             if ($data === null) {
                 return [
                     $field_error_code => $error_code,
