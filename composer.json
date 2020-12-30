@@ -13,6 +13,7 @@
     "require": {
         "php": ">=7.2",
         "ext-json": "*",
+        "hyperf/command": "^2.0.0",
         "hyperf/http-server": "^2.0.0",
         "hyperf/logger": "^2.0.0",
         "hyperf/validation": "^2.0.0"

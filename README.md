@@ -341,6 +341,9 @@ php bin/hyperf.php apidog:ui --port 8888
 ![AOFVzI](https://gitee.com/daodao97/asset/raw/master/imgs/AOFVzI.jpg)
 
 ## 更新日志
+- 20201230
+  - 支持 hyperf 2.1 版本
+  - 修复 `@Header` 参数名被底层转换为全小写导致的验证无效
 - 20201126 
   - 统一 `version`, `prefix`, `path` 的前缀处理逻辑 [issue/42](https://github.com/daodao97/apidog/issues/42)
 - 20201111 [@ice](https://github.com/ice-leng)
