@@ -187,8 +187,6 @@ use Hyperf\Utils\ApplicationContext;
  *     "avatar": { "default": "avatar", "type": "string", "description": "用户头像" },
  *  })
  * })
- *
- * @RouterAuthAnnotation(isPublic=true)
  */
 class DemoController extends AuthController
 {
@@ -202,7 +200,6 @@ class DemoController extends AuthController
      * @FormData(key="file|文件", rule="file")
      * @ApiResponse(code="-1", description="参数错误", template="page")
      * @ApiResponse(code="0", description="请求成功", schema={"id":"1"})
-     *
      */
     public function add()
     {
