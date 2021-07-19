@@ -57,4 +57,22 @@ return [
         //     "message|message" => 'Success',
         // ],
     ],
+    // golbal 节点 为全局性的 参数配置
+    // 跟注解相同, 支持 header, path, query, body, formData
+    // 子项为具体定义
+    // 模式一: [ key => rule ]
+    // 模式二: [ [key, rule, defautl, description] ]
+    'global' => [
+        // 'header' => [
+        //     "x-token|验签" => "required|cb_token"
+        // ],
+        // 'query' => [
+        //     [
+        //         'key' => 'xx|cc',
+        //         'rule' => 'required',
+        //         'default' => 'abc',
+        //         'description' => 'description'
+        //     ]
+        // ]
+    ]
 ];

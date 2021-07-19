@@ -25,18 +25,71 @@ use Psr\Http\Message\ServerRequestInterface;
 class ValidationApi
 {
     public $validation;
+    public $container;
+    public $config;
 
     public function __construct()
     {
         $this->validation = make(Validation::class);
+        $this->container = ApplicationContext::getContainer();
+        $this->config = $this->container->get(ConfigInterface::class);
+    }
+
+    public function paramObj($in, $value) {
+       switch ($in) {
+           case 'query':
+               return new Query($value);
+           case 'formData':
+               return new FormData($value);
+           case 'header':
+               return new Header($value);
+           case 'body':
+               return new Body($value);
+       }
+       return null;
+    }
+
+    public function globalParams() : array
+    {
+        $conf = $this->config->get('apidog.global', []);
+        $globalAnno = [];
+        foreach ($conf as $in  => $params) {
+            $paramsObj = [];
+            if (isset($params[0])) {
+                foreach ($params as $param) {
+                    $paramsObj[] = $this->paramObj($in, $param);
+                }
+            } else {
+                if ($in == 'body') {
+                    $globalAnno[] = $this->paramObj($in, [
+                        'in' => $in,
+                        'rules' => $params
+                    ]);
+                } else {
+                    foreach ($params as $key => $rule) {
+                        $paramsObj[] = $this->paramObj($in, [
+                            'in' => $in,
+                            'key' => $key,
+                            'rule' => $rule
+                        ]);
+                    }
+                }
+            }
+            $globalAnno[]= array_filter($paramsObj);
+        }
+
+        return $globalAnno;
     }
 
     public function validated($controller, $action)
     {
-        $container = ApplicationContext::getContainer();
-        $controllerInstance = $container->get($controller);
-        $request = $container->get(ServerRequestInterface::class);
-        $annotations = ApiAnnotation::methodMetadata($controller, $action);
+        $controllerInstance = $this->container->get($controller);
+        $request = $this->container->get(ServerRequestInterface::class);
+        $annotations = array_merge(
+            ApiAnnotation::methodMetadata($controller, $action),
+            $this->globalParams()
+        );
+
         $header_rules = [];
         $query_rules = [];
         $body_rules = [];
@@ -49,7 +102,7 @@ class ValidationApi
                 $query_rules[$annotation->key] = $annotation->rule;
             }
             if ($annotation instanceof Body) {
-                $body_rules = $annotation->rules;
+                $body_rules = array_merge($body_rules, $annotation->rules);
             }
             if ($annotation instanceof FormData) {
                 $form_data_rules[$annotation->key] = $annotation->rule;
