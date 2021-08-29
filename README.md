@@ -69,25 +69,43 @@ return [
         'schemes' => ['http'],
     ],
     'templates' => [
-        // {template} 字面变量  替换 schema 内容
-//        // 默认 成功 返回
-//        'success' => [
-//            "code|code"    => '0',
-//            "result"  => '{template}',
-//            "message|message" => 'Success',
-//        ],
-//        // 分页
-//        'page' => [
-//            "code|code"    => '0',
-//            "result"  => [
-//                'pageSize' => 10,
-//                'total' => 1,
-//                'totalPage' => 1,
-//                'list' => '{template}'
-//            ],
-//            "message|message" => 'Success',
-//        ],
+    // {template} 字面变量  替换 schema 内容
+    // // 默认 成功 返回
+    // 'success' => [
+    //     "code|code"    => '0',
+    //     "result"  => '{template}',
+    //     "message|message" => 'Success',
+    // ],
+    // // 分页
+    // 'page' => [
+    //     "code|code"    => '0',
+    //     "result"  => [
+    //         'pageSize' => 10,
+    //         'total' => 1,
+    //         'totalPage' => 1,
+    //         'list' => '{template}'
+    //     ],
+    //     "message|message" => 'Success',
+    //],
     ],
+    // golbal 节点 为全局性的 参数配置
+    // 跟注解相同, 支持 header, path, query, body, formData
+    // 子项为具体定义
+    // 模式一: [ key => rule ]
+    // 模式二: [ [key, rule, defautl, description] ]
+    'global' => [
+        // 'header' => [
+        //     "x-token|验签" => "required|cb_token"
+        // ],
+        // 'query' => [
+        //     [
+        //         'key' => 'xx|cc',
+        //         'rule' => 'required',
+        //         'default' => 'abc',
+        //         'description' => 'description'
+        //     ]
+        // ]
+    ]
 ];
 ```
 

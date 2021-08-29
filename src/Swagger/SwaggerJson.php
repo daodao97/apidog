@@ -420,7 +420,7 @@ class SwaggerJson
         $pathInfo = pathinfo($file);
         if (! empty($pathInfo['dirname'])) {
             if (file_exists($pathInfo['dirname']) === false) {
-                if (mkdir($pathInfo['dirname'], 0777, true) && chmod($pathInfo['dirname'], 0777)) {
+                if (mkdir($pathInfo['dirname'], 0644, true) && chmod($pathInfo['dirname'], 0644)) {
                     return false;
                 }
             }
