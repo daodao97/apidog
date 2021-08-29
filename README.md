@@ -338,6 +338,8 @@ php bin/hyperf.php apidog:ui --port 8888
 ![AOFVzI](https://gitee.com/daodao97/asset/raw/master/imgs/AOFVzI.jpg)
 
 ## 更新日志
+- 20210829
+  - fix `swagger` 生成时 `server` 类型过滤问题, 屏蔽非http的服务
 - 20201230
   - 支持 hyperf 2.1 版本
   - 修复 `@Header` 参数名被底层转换为全小写导致的验证无效

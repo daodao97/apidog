@@ -464,6 +464,9 @@ class SwaggerJson
 
     private function rules2schema($name, $rules)
     {
+        if (!$rules) {
+            return;
+        }
         $schema = [
             'type' => 'object',
             'properties' => [],
