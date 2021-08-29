@@ -49,9 +49,9 @@ class BootAppConfListener implements ListenerInterface
             $logger->warning('You have multiple serve, but your apidog.output_file not contains {server} var');
         }
         foreach ($servers as $server) {
-//            if ($server['type'] != \Hyperf\Server\Server::SERVER_HTTP) {
-//                continue;
-//            }
+            if ($server['type'] != \Hyperf\Server\Server::SERVER_HTTP) {
+                continue;
+            }
             $router = $container->get(DispatcherFactory::class)->getRouter($server['name']);
             $data = $router->getData();
             $swagger = new SwaggerJson($server['name']);
