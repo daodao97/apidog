@@ -358,6 +358,7 @@ php bin/hyperf.php apidog:ui --port 8888
 ## 更新日志
 - 20210829
   - fix `swagger` 生成时 `server` 类型过滤问题, 屏蔽非http的服务
+  - 增加 `global` 全局的参数规则, 详见 `apidog.php` `global` 节点
 - 20201230
   - 支持 hyperf 2.1 版本
   - 修复 `@Header` 参数名被底层转换为全小写导致的验证无效
