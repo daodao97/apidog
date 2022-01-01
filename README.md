@@ -137,7 +137,7 @@ swagger文档生成: 在`php bin/hyperf.php start` 启动 `http-server` 时, 通
 `GetApi`, `PostApi`, `PutApi`, `DeleteApi`
 
 ### 参数类型
-`Header`, `Quyer`, `Body`, `FormData`, `Path`
+`Header`, `Query`, `Body`, `FormData`, `Path`
 
 ### 其他
 `ApiController`, `ApiResponse`, `ApiVersion`, `ApiServer`, `ApiDefinitions`, `ApiDefinition`
