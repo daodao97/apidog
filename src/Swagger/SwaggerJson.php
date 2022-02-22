@@ -109,6 +109,9 @@ class SwaggerJson
                 $consumes = 'application/json';
             }
         }
+        if ($mapping === null) {
+            return;
+        }
         $this->makeDefinition($definitionsAnno);
         $definitionAnno && $this->makeDefinition([$definitionAnno]);
 
