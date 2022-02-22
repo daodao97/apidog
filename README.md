@@ -356,6 +356,8 @@ php bin/hyperf.php apidog:ui --port 8888
 ![AOFVzI](https://gitee.com/daodao97/asset/raw/master/imgs/AOFVzI.jpg)
 
 ## 更新日志
+- 20220222
+  - swagger bug fix by [PR](https://github.com/daodao97/apidog/pull/67)   
 - 20210829
   - fix `swagger` 生成时 `server` 类型过滤问题, 屏蔽非http的服务
   - 增加 `global` 全局的参数规则, 详见 `apidog.php` `global` 节点
