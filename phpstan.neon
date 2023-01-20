@@ -1,0 +1,11 @@
+# Magic behaviour with __get, __set, __call and __callStatic is not exactly static analyser-friendly :)
+# Fortunately, You can ignore it by the following config.
+#
+
+parameters:
+  inferPrivatePropertyTypeFromConstructor: true
+  treatPhpDocTypesAsCertain: true
+  reportUnmatchedIgnoredErrors: false
+  ignoreErrors:
+    - '#Call to static method .* on an unknown class Swoole\\Timer.#'
+    - '#Instantiated class Swoole\\Http\\Server not found.#'

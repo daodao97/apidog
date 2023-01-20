@@ -17,7 +17,7 @@ class ValidationCustomRule
      * @param mixed $attribute 属性
      * @param mixed $value 属性值
      *
-     * @return bool | string 校验错误则返回错误信息, 正确则返回 true
+     * @return bool|string 校验错误则返回错误信息, 正确则返回 true
      */
     public function test($attribute, $value)
     {

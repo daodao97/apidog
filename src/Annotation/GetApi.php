@@ -19,7 +19,7 @@ use Hyperf\HttpServer\Annotation\Mapping;
  */
 class GetApi extends Mapping
 {
-    public $path;
+    public ?string $path;
 
     public $summary;
 
@@ -27,7 +27,7 @@ class GetApi extends Mapping
 
     public $deprecated;
 
-    public $methods = ['GET'];
+    public array $methods = ['GET'];
 
     public function __construct($value = null)
     {

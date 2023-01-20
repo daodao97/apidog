@@ -74,5 +74,5 @@ return [
         //         'description' => 'description'
         //     ]
         // ]
-    ]
+    ],
 ];

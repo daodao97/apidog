@@ -21,18 +21,9 @@ class ApiController extends Controller
 {
     public $tag;
 
-    /**
-     * @var null|string
-     */
-    public $prefix = '';
+    public string $prefix = '';
 
-    /**
-     * @var string
-     */
-    public $server = 'http';
+    public string $server = 'http';
 
-    /**
-     * @var string
-     */
-    public $description = '';
+    public string $description = '';
 }
