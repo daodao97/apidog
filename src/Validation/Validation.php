@@ -178,7 +178,7 @@ class Validation
                 return true;
             }
 
-            public function message()
+            public function message(): array|string
             {
                 return sprintf($this->error, $this->attribute);
             }
@@ -231,7 +231,7 @@ class Validation
                 return true;
             }
 
-            public function message()
+            public function message(): array|string
             {
                 return sprintf($this->error, $this->attribute);
             }

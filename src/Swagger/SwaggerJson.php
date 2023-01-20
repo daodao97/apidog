@@ -168,16 +168,17 @@ class SwaggerJson
         return 'string';
     }
 
-    public function paramObj($in, $value) {
+    public function paramObj($in, $value)
+    {
         if ($in == 'body') {
             return new Body($value);
         }
-        return new class($value) extends Param{};
+        return new class($value) extends Param {};
     }
 
     public function golbalParams(): array
     {
-        $conf_global = $this->config->get("apidog.global", []);
+        $conf_global = $this->config->get('apidog.global', []);
         $global_params = [];
         foreach ($conf_global as $in => $items) {
             if (isset($items[0])) {
@@ -189,12 +190,11 @@ class SwaggerJson
                     $value = [
                         'in' => $in,
                         'key' => $name,
-                        'rule' => $rule
+                        'rule' => $rule,
                     ];
                     $global_params[] = $this->paramObj($in, $value);
                 }
             }
-
         }
         return $global_params;
     }
@@ -467,7 +467,7 @@ class SwaggerJson
 
     private function rules2schema($name, $rules)
     {
-        if (!$rules) {
+        if (! $rules) {
             return;
         }
         $schema = [

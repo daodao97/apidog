@@ -16,16 +16,18 @@ use Hyperf\Apidog\Annotation\FormData;
 use Hyperf\Apidog\Annotation\Header;
 use Hyperf\Apidog\Annotation\Query;
 use Hyperf\Apidog\ApiAnnotation;
+use Hyperf\Context\Context;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\HttpMessage\Stream\SwooleStream;
 use Hyperf\Utils\ApplicationContext;
-use Hyperf\Utils\Context;
 use Psr\Http\Message\ServerRequestInterface;
 
 class ValidationApi
 {
     public $validation;
+
     public $container;
+
     public $config;
 
     public function __construct()
@@ -35,8 +37,9 @@ class ValidationApi
         $this->config = $this->container->get(ConfigInterface::class);
     }
 
-    public function paramObj($in, $value) {
-       switch ($in) {
+    public function paramObj($in, $value)
+    {
+        switch ($in) {
            case 'query':
                return new Query($value);
            case 'formData':
@@ -46,14 +49,14 @@ class ValidationApi
            case 'body':
                return new Body($value);
        }
-       return null;
+        return null;
     }
 
-    public function globalParams() : array
+    public function globalParams(): array
     {
         $conf = $this->config->get('apidog.global', []);
         $globalAnno = [];
-        foreach ($conf as $in  => $params) {
+        foreach ($conf as $in => $params) {
             $paramsObj = [];
             if (isset($params[0])) {
                 foreach ($params as $param) {
@@ -63,19 +66,19 @@ class ValidationApi
                 if ($in == 'body') {
                     $globalAnno[] = $this->paramObj($in, [
                         'in' => $in,
-                        'rules' => $params
+                        'rules' => $params,
                     ]);
                 } else {
                     foreach ($params as $key => $rule) {
                         $paramsObj[] = $this->paramObj($in, [
                             'in' => $in,
                             'key' => $key,
-                            'rule' => $rule
+                            'rule' => $rule,
                         ]);
                     }
                 }
             }
-            $globalAnno[]= array_filter($paramsObj);
+            $globalAnno[] = array_filter($paramsObj);
         }
 
         return $globalAnno;
@@ -171,7 +174,7 @@ class ValidationApi
             [
                 $data,
                 $error,
-            ] = $this->check($form_data_rules, array_merge($request->getUploadedFiles(),$request->getParsedBody()), $controllerInstance);
+            ] = $this->check($form_data_rules, array_merge($request->getUploadedFiles(), $request->getParsedBody()), $controllerInstance);
             if ($data === null) {
                 return [
                     $field_error_code => $error_code,
