@@ -11,12 +11,10 @@ declare(strict_types=1);
  */
 namespace Hyperf\Apidog\Annotation;
 
+use Attribute;
 use Hyperf\HttpServer\Annotation\Controller;
 
-/**
- * @Annotation
- * @Target({"CLASS"})
- */
+#[Attribute(Attribute::TARGET_CLASS)]
 class ApiController extends Controller
 {
     public $tag;

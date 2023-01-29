@@ -11,18 +11,13 @@ declare(strict_types=1);
  */
 namespace Hyperf\Apidog\Annotation;
 
+use Attribute;
 use Hyperf\Di\Annotation\AbstractAnnotation;
 
-/**
- * @Annotation
- * @Target({"CLASS"})
- */
+#[Attribute(Attribute::TARGET_CLASS)]
 class ApiDefinitions extends AbstractAnnotation
 {
-    /**
-     * @var array
-     */
-    public $definitions;
+    public array $definitions;
 
     public function __construct($value = null)
     {

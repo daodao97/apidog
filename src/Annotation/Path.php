@@ -11,10 +11,9 @@ declare(strict_types=1);
  */
 namespace Hyperf\Apidog\Annotation;
 
-/**
- * @Annotation
- * @Target({"METHOD"})
- */
+use Attribute;
+
+#[Attribute(Attribute::TARGET_METHOD)]
 class Path extends Param
 {
     public $in = 'path';

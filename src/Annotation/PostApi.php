@@ -11,12 +11,10 @@ declare(strict_types=1);
  */
 namespace Hyperf\Apidog\Annotation;
 
+use Attribute;
 use Hyperf\HttpServer\Annotation\Mapping;
 
-/**
- * @Annotation
- * @Target({"METHOD"})
- */
+#[Attribute(Attribute::TARGET_METHOD)]
 class PostApi extends Mapping
 {
     public ?string $path;

@@ -11,12 +11,10 @@ declare(strict_types=1);
  */
 namespace Hyperf\Apidog\Annotation;
 
+use Attribute;
 use Hyperf\Di\Annotation\AbstractAnnotation;
 
-/**
- * @Annotation
- * @Target({"ALL"})
- */
+#[Attribute(Attribute::TARGET_ALL)]
 class ApiDefinition extends AbstractAnnotation
 {
     public $name;

@@ -11,10 +11,9 @@ declare(strict_types=1);
  */
 namespace Hyperf\Apidog\Annotation;
 
-/**
- * @Annotation
- * @Target({"METHOD", "CLASS"})
- */
+use Attribute;
+
+#[Attribute(Attribute::TARGET_METHOD | Attribute::TARGET_CLASS)]
 class Header extends Param
 {
     public $in = 'header';
